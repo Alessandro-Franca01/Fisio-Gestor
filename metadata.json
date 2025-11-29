@@ -1,0 +1,5 @@
+{
+  "name": "FisioGestor",
+  "description": "A comprehensive management application for physiotherapists featuring patient tracking, session management, financial reporting, and scheduling.",
+  "requestFramePermissions": []
+}
