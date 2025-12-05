@@ -5,7 +5,6 @@ import containerQueries from '@tailwindcss/container-queries';
 export default {
   content: [
     "./index.html",
-    "./**/*.{js,ts,jsx,tsx}",
     "./index.tsx",
     "./App.tsx",
     "./pages/**/*.{js,ts,jsx,tsx}",
