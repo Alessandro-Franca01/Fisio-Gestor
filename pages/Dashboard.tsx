@@ -40,7 +40,10 @@ export const Dashboard: React.FC = () => {
         <div className="flex flex-col gap-4 rounded-xl border border-border-light bg-surface-light p-6 dark:border-border-dark dark:bg-surface-dark shadow-sm">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-bold tracking-[-0.015em] text-text-light dark:text-text-dark">Próximos Atendimentos</h2>
-            <button className="flex h-8 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary/20 px-4 text-sm font-medium text-text-light dark:bg-primary/30 dark:text-text-dark">
+            <button 
+              onClick={() => navigate('/agenda')}
+              className="flex h-8 min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-primary/20 px-4 text-sm font-medium text-text-light dark:bg-primary/30 dark:text-text-dark hover:bg-primary/30 transition-colors"
+            >
               <span className="truncate">Ver Todos</span>
             </button>
           </div>
