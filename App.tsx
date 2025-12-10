@@ -13,6 +13,15 @@ import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
 
 const Layout: React.FC = () => {
+  const navigate = React.useNavigate();
+
+  React.useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/');
+    }
+  }, [navigate]);
+
   return (
     <div className="flex min-h-screen w-full">
       <Sidebar />
@@ -28,21 +37,21 @@ export default function App() {
     <Router>
       <Routes>
         <Route path="/" element={<Login />} />
-        
+
         {/* Protected Routes */}
         <Route element={<Layout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/patients" element={<PatientList />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
           <Route path="/patients/new" element={<div className="text-center p-10">Patient Creation Form Placeholder</div>} />
-          
+
           <Route path="/agenda" element={<Agenda />} />
-          
+
           <Route path="/appointments/new" element={<AppointmentCreate />} />
           <Route path="/appointments/execute" element={<AppointmentExecute />} />
-          
+
           <Route path="/sessions/new" element={<SessionCreate />} />
-          
+
           <Route path="/finance" element={<Finance />} />
         </Route>
       </Routes>
