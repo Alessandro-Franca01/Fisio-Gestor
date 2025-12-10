@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { HashRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { HashRouter as Router, Routes, Route, Outlet, useNavigate } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
 import { Login } from './pages/Login';
 import { Dashboard } from './pages/Dashboard';
@@ -13,7 +13,7 @@ import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
 
 const Layout: React.FC = () => {
-  const navigate = React.useNavigate();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     const token = localStorage.getItem('token');

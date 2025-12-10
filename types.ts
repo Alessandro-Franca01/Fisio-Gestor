@@ -38,12 +38,12 @@ export interface FinancialRecord {
   status: 'Pago' | 'Pendente';
 }
 
-export type IconName = 
-  | 'dashboard' 
-  | 'group' 
-  | 'calendar_month' 
-  | 'payments' 
-  | 'settings' 
+export type IconName =
+  | 'dashboard'
+  | 'group'
+  | 'calendar_month'
+  | 'payments'
+  | 'settings'
   | 'logout'
   | 'search'
   | 'add'
@@ -63,3 +63,12 @@ export type IconName =
   | 'person_add'
   | 'error'
   | 'hourglass_top';
+
+export interface DashboardData {
+  financial: {
+    total_to_receive: number;
+    monthly_revenue: number;
+  };
+  upcoming_appointments: any[]; // We will map this to Appointment in the component
+  pending_appointments: any[];
+}
