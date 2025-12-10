@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 
-// Mock data for appointments
+// Dados fictícios para demonstração
 const appointments = [
   { id: 1, dayIndex: 0, time: '09:00', patient: 'Ana Silva', type: 'Fisioterapia', color: 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300' },
   { id: 2, dayIndex: 0, time: '14:00', patient: 'Carlos Souza', type: 'Pilates', color: 'bg-green-100 dark:bg-green-900/40 border-l-4 border-green-500 text-green-700 dark:text-green-300' },
@@ -14,13 +14,13 @@ const appointments = [
 ];
 
 const weekDays = [
-  { label: 'Seg', date: '12', fullDate: '2024-08-12' },
-  { label: 'Ter', date: '13', fullDate: '2024-08-13' },
-  { label: 'Qua', date: '14', fullDate: '2024-08-14' },
-  { label: 'Qui', date: '15', fullDate: '2024-08-15' },
-  { label: 'Sex', date: '16', fullDate: '2024-08-16' },
-  { label: 'Sáb', date: '17', fullDate: '2024-08-17' },
-  { label: 'Dom', date: '18', fullDate: '2024-08-18' },
+  { label: 'Seg', date: '12' },
+  { label: 'Ter', date: '13' },
+  { label: 'Qua', date: '14' },
+  { label: 'Qui', date: '15' },
+  { label: 'Sex', date: '16' },
+  { label: 'Sáb', date: '17' },
+  { label: 'Dom', date: '18' },
 ];
 
 const hours = [
@@ -37,7 +37,7 @@ export const Agenda: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col h-full overflow-hidden">
+    <div className="flex flex-col h-full max-h-[calc(100vh-4rem)]">
       {/* Header */}
       <header className="flex flex-wrap items-center justify-between gap-4 mb-6 shrink-0">
         <div className="flex flex-col gap-1">
@@ -66,7 +66,7 @@ export const Agenda: React.FC = () => {
         </div>
       </header>
 
-      {/* Calendar Container - Added min-h-0 for better flex scrolling */}
+      {/* Calendar Container */}
       <div className="flex-1 flex flex-col overflow-hidden bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm min-h-0">
         
         {/* Calendar Controls */}
@@ -120,6 +120,7 @@ export const Agenda: React.FC = () => {
                           <div 
                             className={`w-full h-full rounded-md p-2 text-xs flex flex-col gap-1 cursor-pointer hover:opacity-90 transition-all shadow-sm ${appointment.color}`}
                             onClick={() => navigate('/appointments/execute')}
+                            title={`${appointment.patient} - ${appointment.type}`}
                           >
                             <div className="font-bold truncate">{appointment.patient}</div>
                             <div className="truncate opacity-80">{appointment.type}</div>
