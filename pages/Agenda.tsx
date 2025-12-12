@@ -1,28 +1,10 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-
-// Mock data for appointments
-const appointments = [
-  { id: 1, dayIndex: 0, time: '09:00', patient: 'Ana Silva', type: 'Fisioterapia', color: 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300' },
-  { id: 2, dayIndex: 0, time: '14:00', patient: 'Carlos Souza', type: 'Pilates', color: 'bg-green-100 dark:bg-green-900/40 border-l-4 border-green-500 text-green-700 dark:text-green-300' },
-  { id: 3, dayIndex: 1, time: '10:00', patient: 'Maria Oliveira', type: 'Avaliação', color: 'bg-purple-100 dark:bg-purple-900/40 border-l-4 border-purple-500 text-purple-700 dark:text-purple-300' },
-  { id: 4, dayIndex: 2, time: '16:00', patient: 'João Santos', type: 'Reabilitação', color: 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-500 text-orange-700 dark:text-orange-300' },
-  { id: 5, dayIndex: 3, time: '11:00', patient: 'Fernanda Lima', type: 'Fisioterapia', color: 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300' },
-  { id: 6, dayIndex: 4, time: '09:00', patient: 'Roberto Dias', type: 'Pilates', color: 'bg-green-100 dark:bg-green-900/40 border-l-4 border-green-500 text-green-700 dark:text-green-300' },
-  { id: 7, dayIndex: 4, time: '15:00', patient: 'Lucia Almeida', type: 'Avaliação', color: 'bg-purple-100 dark:bg-purple-900/40 border-l-4 border-purple-500 text-purple-700 dark:text-purple-300' },
-];
-
-const weekDays = [
-  { label: 'Seg', date: '12', fullDate: '2024-08-12' },
-  { label: 'Ter', date: '13', fullDate: '2024-08-13' },
-  { label: 'Qua', date: '14', fullDate: '2024-08-14' },
-  { label: 'Qui', date: '15', fullDate: '2024-08-15' },
-  { label: 'Sex', date: '16', fullDate: '2024-08-16' },
-  { label: 'Sáb', date: '17', fullDate: '2024-08-17' },
-  { label: 'Dom', date: '18', fullDate: '2024-08-18' },
-];
+import { getAppointments, generateWeekDays, Appointment } from '../services/appointmentService';
+import { format, startOfWeek, endOfWeek, addWeeks, subWeeks, parseISO, isToday } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 const hours = [
   '08:00', '09:00', '10:00', '11:00', '12:00', 
@@ -32,114 +14,259 @@ const hours = [
 export const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const [currentView, setCurrentView] = useState<'Semana' | 'Mês'>('Semana');
+  const [currentWeekStart, setCurrentWeekStart] = useState(startOfWeek(new Date(), { locale: ptBR }));
+  const [weekDays, setWeekDays] = useState(generateWeekDays(new Date()));
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch appointments when the week changes
+  useEffect(() => {
+    const fetchAppointments = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const startDate = startOfWeek(currentWeekStart, { locale: ptBR });
+        const endDate = endOfWeek(currentWeekStart, { locale: ptBR });
+        
+        const data = await getAppointments(startDate, endDate);
+        setAppointments(data);
+      } catch (err) {
+        console.error('Error loading appointments:', err);
+        setError('Erro ao carregar os agendamentos. Tente novamente mais tarde.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAppointments();
+  }, [currentWeekStart]);
+
+  const handlePreviousWeek = () => {
+    const newDate = subWeeks(currentWeekStart, 1);
+    setCurrentWeekStart(newDate);
+    setWeekDays(generateWeekDays(newDate));
+  };
+
+  const handleNextWeek = () => {
+    const newDate = addWeeks(currentWeekStart, 1);
+    setCurrentWeekStart(newDate);
+    setWeekDays(generateWeekDays(newDate));
+  };
+
+  const handleToday = () => {
+    const today = new Date();
+    setCurrentWeekStart(startOfWeek(today, { locale: ptBR }));
+    setWeekDays(generateWeekDays(today));
+  };
 
   const getAppointment = (dayIndex: number, time: string) => {
-    return appointments.find(app => app.dayIndex === dayIndex && app.time === time);
+    const day = weekDays[dayIndex];
+    if (!day) return null;
+    
+    return appointments.find(app => {
+      try {
+        // Format the appointment date to match the day's fullDate (YYYY-MM-DD)
+        const appointmentDate = app.date ? format(new Date(app.date), 'yyyy-MM-dd') : '';
+        
+        // Normalize times for comparison (remove seconds if present)
+        const normalizeTime = (timeStr: string) => {
+          if (!timeStr) return '';
+          return timeStr.split(':').slice(0, 2).join(':'); // Keep only HH:MM
+        };
+        
+        const appointmentTime = normalizeTime(app.scheduled_time || '');
+        const slotTime = normalizeTime(time);
+        
+        console.log('Comparing:', {
+          appointmentDate,
+          dayFullDate: day.fullDate,
+          appointmentTime,
+          slotTime,
+          matches: appointmentDate === day.fullDate && appointmentTime === slotTime
+        });
+        
+        return appointmentDate === day.fullDate && appointmentTime === slotTime;
+      } catch (error) {
+        console.error('Error in getAppointment:', { error, app, day, time });
+        return false;
+      }
+    });
   };
 
   return (
-    <div className="flex flex-col h-full max-h-screen overflow-hidden">
+    <div className="flex flex-col h-full max-h-screen overflow-hidden p-4">
       {/* Header */}
-      <header className="flex flex-wrap items-center justify-between gap-4 mb-6 shrink-0">
+      <header className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div className="flex flex-col gap-1">
           <h1 className="text-text-light dark:text-text-dark text-3xl font-bold tracking-tight">Agenda</h1>
-          <p className="text-subtle-light dark:text-subtle-dark text-base font-normal leading-normal">Gerencie seus horários e atendimentos.</p>
+          <p className="text-subtle-light dark:text-subtle-dark text-base">
+            {format(currentWeekStart, 'MMMM yyyy', { locale: ptBR })}
+          </p>
         </div>
         <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={handlePreviousWeek}
+              className="p-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark"
+              aria-label="Semana anterior"
+            >
+              <Icon name="chevron-left" className="w-5 h-5" />
+            </button>
+            <button 
+              onClick={handleToday}
+              className="px-3 py-1.5 text-sm font-medium rounded-md bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark"
+            >
+              Hoje
+            </button>
+            <button 
+              onClick={handleNextWeek}
+              className="p-2 rounded-full hover:bg-background-light dark:hover:bg-background-dark"
+              aria-label="Próxima semana"
+            >
+              <Icon name="chevron-right" className="w-5 h-5" />
+            </button>
+          </div>
           <div className="flex bg-surface-light dark:bg-surface-dark rounded-lg p-1 border border-border-light dark:border-border-dark">
             <button 
               onClick={() => setCurrentView('Semana')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'Semana' ? 'bg-primary/20 text-primary' : 'text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark'}`}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'Semana' 
+                  ? 'bg-primary/20 text-primary' 
+                  : 'text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark'
+              }`}
             >
               Semana
             </button>
             <button 
               onClick={() => setCurrentView('Mês')}
-              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${currentView === 'Mês' ? 'bg-primary/20 text-primary' : 'text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark'}`}
+              className={`px-3 py-1.5 text-sm font-medium rounded-md transition-colors ${
+                currentView === 'Mês'
+                  ? 'bg-primary/20 text-primary' 
+                  : 'text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark'
+              }`}
+              disabled
             >
-              Mês
+              Mês (em breve)
             </button>
           </div>
-          <button onClick={() => navigate('/appointments/new')} className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-wide shadow-sm hover:opacity-90">
-            <Icon name="add" />
-            <span className="truncate hidden sm:inline">Novo Agendamento</span>
+          <button 
+            onClick={() => navigate('/appointments/new')} 
+            className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-wide shadow-sm transition-all hover:opacity-90"
+          >
+            <Icon name="plus" className="w-4 h-4" />
+            <span>Novo agendamento</span>
           </button>
         </div>
       </header>
 
-      {/* Calendar Controls */}
-      <div className="flex items-center justify-between mb-4 shrink-0 bg-surface-light dark:bg-surface-dark p-4 rounded-xl border border-border-light dark:border-border-dark">
-        <div className="flex items-center gap-4">
-          <button className="p-1 hover:bg-primary/10 rounded-full text-text-light dark:text-text-dark">
-            <span className="material-symbols-outlined">chevron_left</span>
-          </button>
-          <span className="text-lg font-bold text-text-light dark:text-text-dark">Agosto 2024</span>
-          <button className="p-1 hover:bg-primary/10 rounded-full text-text-light dark:text-text-dark">
-            <span className="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-        <button className="text-sm font-medium text-primary hover:underline">
-          Hoje
-        </button>
-      </div>
-
-      {/* Week View Grid */}
-      <div className="flex-1 overflow-auto bg-surface-light dark:bg-surface-dark rounded-xl border border-border-light dark:border-border-dark shadow-sm">
-        <div className="min-w-[800px]">
-          {/* Days Header */}
-          <div className="grid grid-cols-8 border-b border-border-light dark:border-border-dark sticky top-0 bg-surface-light dark:bg-surface-dark z-10">
-            <div className="p-4 border-r border-border-light dark:border-border-dark flex items-center justify-center text-subtle-light dark:text-subtle-dark font-medium text-sm">
-              Horário
+      {/* Calendar Grid */}
+      <div className="flex-1 overflow-auto bg-white dark:bg-gray-900 rounded-lg border border-border-light dark:border-border-dark">
+        {isLoading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center justify-center h-full p-8 text-center">
+            <Icon name="alert-circle" className="w-12 h-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-medium text-text-light dark:text-text-dark mb-2">
+              Erro ao carregar agendamentos
+            </h3>
+            <p className="text-subtle-light dark:text-subtle-dark mb-4">{error}</p>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="px-4 py-2 bg-primary text-white rounded-md hover:opacity-90"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        ) : (
+          <div className="min-w-max">
+            {/* Days Header */}
+            <div className="grid grid-cols-8 gap-px border-b border-border-light dark:border-border-dark">
+              <div className="h-16 flex items-center px-4">
+                <span className="text-sm font-medium text-subtle-light dark:text-subtle-dark">Horário</span>
+              </div>
+              {weekDays.map((day, index) => {
+                const dayIsToday = isToday(parseISO(day.fullDate));
+                return (
+                  <div key={index} className="h-16 flex flex-col items-center justify-center border-r border-border-light dark:border-border-dark last:border-r-0">
+                    <span className="text-sm font-medium text-text-light dark:text-text-dark">
+                      {day.label}
+                    </span>
+                    <span 
+                      className={`flex items-center justify-center w-8 h-8 mt-1 rounded-full text-sm ${
+                        dayIsToday 
+                          ? 'bg-primary text-white' 
+                          : 'text-subtle-light dark:text-subtle-dark'
+                      }`}
+                    >
+                      {day.date}
+                    </span>
+                  </div>
+                );
+              })}
             </div>
-            {weekDays.map((day, index) => (
-              <div key={index} className={`p-3 text-center border-r border-border-light dark:border-border-dark last:border-r-0 ${index === 0 ? 'bg-primary/5' : ''}`}>
-                <p className="text-sm font-medium text-subtle-light dark:text-subtle-dark">{day.label}</p>
-                <p className={`text-lg font-bold ${index === 0 ? 'text-primary' : 'text-text-light dark:text-text-dark'}`}>{day.date}</p>
-              </div>
-            ))}
-          </div>
 
-          {/* Time Slots */}
-          <div className="divide-y divide-border-light dark:divide-border-dark">
-            {hours.map((hour) => (
-              <div key={hour} className="grid grid-cols-8 min-h-[100px]">
-                {/* Time Label */}
-                <div className="p-2 border-r border-border-light dark:border-border-dark flex items-start justify-center text-xs font-medium text-subtle-light dark:text-subtle-dark bg-background-light/50 dark:bg-background-dark/50">
-                  {hour}
+            {/* Time Slots */}
+            <div className="grid grid-cols-8">
+              {/* Time column */}
+              <div className="flex flex-col">
+                {hours.map((hour) => (
+                  <div 
+                    key={hour} 
+                    className="h-16 flex items-center px-4 border-b border-border-light dark:border-border-dark"
+                  >
+                    <span className="text-xs text-subtle-light dark:text-subtle-dark">
+                      {hour}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Day columns */}
+              {weekDays.map((day, dayIndex) => (
+                <div 
+                  key={dayIndex} 
+                  className="flex flex-col border-r border-border-light dark:border-border-dark last:border-r-0"
+                >
+                  {hours.map((hour) => {
+                    const appointment = getAppointment(dayIndex, hour);
+                    return (
+                      <div 
+                        key={hour} 
+                        className="h-16 p-1 border-b border-border-light dark:border-border-dark hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          if (appointment) {
+                            navigate(`/appointments/${appointment.id}`);
+                          } else {
+                            navigate(`/appointments/new?date=${day.fullDate}&time=${hour}`);
+                          }
+                        }}
+                      >
+                        {appointment && (
+                          <div 
+                            className={`p-2 rounded text-xs h-full overflow-hidden ${appointment.color} flex flex-col`}
+                          >
+                            <div className="font-medium truncate">
+                              {appointment.patient_name}
+                            </div>
+                            <div className="text-xs opacity-80 truncate">
+                              {appointment.type}
+                            </div>
+                            {appointment.status === 'Confirmado' && (
+                              <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-green-500"></div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-
-                {/* Days Cells */}
-                {weekDays.map((day, dayIndex) => {
-                  const appointment = getAppointment(dayIndex, hour);
-                  
-                  return (
-                    <div key={`${dayIndex}-${hour}`} className="relative border-r border-border-light dark:border-border-dark last:border-r-0 p-1 group hover:bg-background-light dark:hover:bg-background-dark/50 transition-colors">
-                      {appointment ? (
-                        <div 
-                          className={`w-full h-full rounded-md p-2 text-xs flex flex-col gap-1 cursor-pointer hover:opacity-90 transition-opacity shadow-sm ${appointment.color}`}
-                          onClick={() => navigate('/appointments/execute')}
-                        >
-                          <div className="font-bold truncate">{appointment.patient}</div>
-                          <div className="truncate opacity-80">{appointment.type}</div>
-                        </div>
-                      ) : (
-                         <div className="w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-center">
-                            <button 
-                                onClick={() => navigate('/appointments/new')}
-                                className="p-1 rounded-full bg-primary/20 hover:bg-primary/40 text-primary transition-colors"
-                                title="Adicionar agendamento"
-                            >
-                                <span className="material-symbols-outlined text-sm">add</span>
-                            </button>
-                         </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
