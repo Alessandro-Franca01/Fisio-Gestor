@@ -1,57 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Icon } from '../components/Icon';
 import { useNavigate } from 'react-router-dom';
-import api from '../services/api';
-
-interface DashboardData {
-  financial: {
-    total_to_receive: number;
-    monthly_revenue: number;
-  };
-  upcoming_appointments: Array<{
-    id: number;
-    patient: { name: string };
-    date: string;
-    scheduled_time: string;
-    location: string;
-  }>;
-  pending_appointments: Array<{
-    id: number;
-    patient: { name: string };
-    date: string;
-    status: string;
-  }>;
-}
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        console.log('Fetching dashboard data...');
-        const response = await api.get('/dashboard');
-        console.log('Dashboard data received:', response.data);
-        setData(response.data);
-      } catch (error) {
-        console.error('Error fetching dashboard data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchDashboardData();
-  }, []);
-
-  if (loading) {
-    return <div className="p-8 text-center text-subtle-light dark:text-subtle-dark">Carregando...</div>;
-  }
-
-  if (!data) {
-    return <div className="p-8 text-center text-red-500">Erro ao carregar dados. Verifique o console.</div>
-  }
 
   return (
     <div className="mx-auto flex max-w-7xl flex-col gap-8">
@@ -74,15 +26,11 @@ export const Dashboard: React.FC = () => {
       <section className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <div className="flex flex-1 flex-col gap-2 rounded-xl border border-border-light bg-surface-light p-6 dark:border-border-dark dark:bg-surface-dark shadow-sm">
           <p className="text-base font-medium text-text-light dark:text-text-dark">Total a Receber</p>
-          <p className="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.financial.total_to_receive || 0)}
-          </p>
+          <p className="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">R$ 1.850,00</p>
         </div>
         <div className="flex flex-1 flex-col gap-2 rounded-xl border border-border-light bg-surface-light p-6 dark:border-border-dark dark:bg-surface-dark shadow-sm">
           <p className="text-base font-medium text-text-light dark:text-text-dark">Pagamentos do Mês</p>
-          <p className="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">
-            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(data?.financial.monthly_revenue || 0)}
-          </p>
+          <p className="text-2xl font-bold tracking-tight text-text-light dark:text-text-dark">R$ 4.200,00</p>
         </div>
       </section>
 
@@ -100,25 +48,23 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="flex flex-col gap-4">
-            {data?.upcoming_appointments.length === 0 ? (
-              <p className="text-subtle-light dark:text-subtle-dark">Nenhum atendimento próximo.</p>
-            ) : (
-              data?.upcoming_appointments.map((item) => (
-                <div key={item.id} className="flex items-start gap-4 rounded-lg p-3 hover:bg-primary/10 cursor-pointer transition-colors" onClick={() => navigate('/appointments/execute')}>
-                  <div className="mt-1 flex size-8 items-center justify-center rounded-full bg-primary/20">
-                    <Icon name="event" className="text-text-light dark:text-text-dark" />
-                  </div>
-                  <div className="flex flex-1 flex-col">
-                    <p className="font-semibold text-text-light dark:text-text-dark">{item.patient?.name}</p>
-                    <p className="text-sm text-subtle-light dark:text-subtle-dark">
-                      {new Date(item.date).toLocaleDateString('pt-BR')} às {item.scheduled_time}
-                    </p>
-                    <p className="text-sm text-subtle-light dark:text-subtle-dark">{item.location || 'Local não informado'}</p>
-                  </div>
-                  <Icon name="chevron_right" className="text-subtle-light dark:text-subtle-dark" />
+            {[
+              { name: 'Carlos Pereira', time: 'Hoje, 14:00', loc: 'Rua das Flores, 123' },
+              { name: 'Mariana Costa', time: 'Hoje, 16:30', loc: 'Av. Principal, 456' },
+              { name: 'Jorge Martins', time: 'Amanhã, 09:00', loc: 'Praça da Sé, 789' }
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-4 rounded-lg p-3 hover:bg-primary/10 cursor-pointer transition-colors" onClick={() => navigate('/appointments/execute')}>
+                <div className="mt-1 flex size-8 items-center justify-center rounded-full bg-primary/20">
+                  <Icon name="event" className="text-text-light dark:text-text-dark" />
                 </div>
-              ))
-            )}
+                <div className="flex flex-1 flex-col">
+                  <p className="font-semibold text-text-light dark:text-text-dark">{item.name}</p>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">{item.time}</p>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">{item.loc}</p>
+                </div>
+                <Icon name="chevron_right" className="text-subtle-light dark:text-subtle-dark" />
+              </div>
+            ))}
           </div>
         </div>
 
@@ -131,22 +77,22 @@ export const Dashboard: React.FC = () => {
             </button>
           </div>
           <div className="flex flex-col gap-4">
-            {data?.pending_appointments.length === 0 ? (
-              <p className="text-subtle-light dark:text-subtle-dark">Nenhum atendimento pendente.</p>
-            ) : (
-              data?.pending_appointments.map((item) => (
-                <div key={item.id} className="flex items-center gap-4 rounded-lg p-3 hover:bg-primary/10">
-                  <div className="flex size-8 items-center justify-center rounded-full bg-amber-500/20">
-                    <Icon name="hourglass_top" className="text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="flex flex-1 flex-col">
-                    <p className="font-semibold text-text-light dark:text-text-dark">{item.patient?.name}</p>
-                    <p className="text-sm text-subtle-light dark:text-subtle-dark">Atendimento de {new Date(item.date).toLocaleDateString('pt-BR')}</p>
-                  </div>
-                  <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">Aguardando Registro</span>
+             <div className="flex items-center gap-4 rounded-lg p-3 hover:bg-primary/10">
+                <div className="flex size-8 items-center justify-center rounded-full bg-amber-500/20"><Icon name="hourglass_top" className="text-amber-600 dark:text-amber-400" /></div>
+                <div className="flex flex-1 flex-col">
+                  <p className="font-semibold text-text-light dark:text-text-dark">Fernanda Lima</p>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">Atendimento de 25/07</p>
                 </div>
-              ))
-            )}
+                <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">Aguardando Registro</span>
+              </div>
+              <div className="flex items-center gap-4 rounded-lg p-3 hover:bg-primary/10">
+                <div className="flex size-8 items-center justify-center rounded-full bg-red-500/20"><Icon name="error" className="text-red-600 dark:text-red-400" /></div>
+                <div className="flex flex-1 flex-col">
+                  <p className="font-semibold text-text-light dark:text-text-dark">Roberto Dias</p>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">Atendimento de 24/07</p>
+                </div>
+                <span className="rounded-full bg-red-500/20 px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300">Pagamento Atrasado</span>
+              </div>
           </div>
         </div>
       </section>
