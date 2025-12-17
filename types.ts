@@ -180,4 +180,5 @@ export type IconName =
   | 'person_add'
   | 'error'
   | 'hourglass_top'
-  | 'assignment';
+  | 'assignment'
+  | 'filter_list';

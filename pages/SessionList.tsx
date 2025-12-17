@@ -117,7 +117,10 @@ export const SessionList: React.FC = () => {
                 <button className="flex items-center justify-center size-10 rounded-lg hover:bg-primary/10 text-subtle-light dark:text-subtle-dark hover:text-primary transition-colors">
                   <Icon name="edit" />
                 </button>
-                <button className="flex items-center justify-center h-10 px-4 rounded-lg bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors">
+                <button 
+                  onClick={() => navigate(`/sessions/${session.id}`)}
+                  className="flex items-center justify-center h-10 px-4 rounded-lg bg-primary/10 text-primary font-bold text-sm hover:bg-primary/20 transition-colors"
+                >
                   Detalhes
                 </button>
               </div>
