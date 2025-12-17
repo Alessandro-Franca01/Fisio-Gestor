@@ -1,15 +1,51 @@
-import React from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Icon } from '../components/Icon';
 import { useNavigate } from 'react-router-dom';
-
-const patients = [
-  { name: 'João da Silva', status: 'Em dia', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAoVNHh_7znLCdQuCsAZ5_4gMgxSWQ0yCq3vlkFdDapohyRDFG5YpXhpoFz9t5PZhKM42Vxw_sSP8dzswCmIKzsQgD1X-rJyJ5DrJ6QFUZuMS0aKt2h6bkmHB3uCMWk2YHZZDaNnsvU-4z4MtTHXCRBl69aWS8kSRu6pZFbKOdoRx9fHnY4IiFLhl0-p5140P-vDEuIfwrBfokECRKBEIZnuF6OiZ2ZTPlC3K0ZwNrYO6rdtNMp7Y_P_PH9I1wSLg4FUFvU1gAyLF8' },
-  { name: 'Maria Clara Oliveira', status: 'Pendente', initials: 'MC', color: 'bg-orange-200 text-orange-700' },
-  { name: 'Carlos Souza', status: 'Atrasado', img: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAmlWC_9HNBhHIm6fRNXXxn-WfcXx_K1luG8MuJBqpbGpyR4XQOwg03EbzI91Q2jpzS-vWtTpjIYAuILFOHi-F72Jgk2Np1-rVs2m3PXfnazUlchaXqRz6evP2C_W1I8q1ekkU6CKxwrdGXbgaEicuksOZcLp3TjA7-S9b25msyo_YARi_hCusBf_0AAkWRDkhnxiyv-lTnLHwFInO_qZy67IqKCLU73bQZILN2X4nw_8y1ofU7rlT962skwuwPJ8AECv4-4K8YAko' }
-];
+import { getPatients } from '../services/patientService';
 
 export const PatientList: React.FC = () => {
   const navigate = useNavigate();
+  const [patients, setPatients] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState<string>('');
+  const debounceRef = useRef<number | null>(null);
+
+  const loadPatients = async (params?: any) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await getPatients(params);
+      setPatients(Array.isArray(data) ? data : []);
+    } catch (err: any) {
+      console.error('Failed to load patients:', err);
+      setError('Erro ao carregar pacientes');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // initial load
+    loadPatients();
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    // debounce search
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(() => {
+      loadPatients(search ? { search } : undefined);
+    }, 300) as unknown as number;
+
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [search]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -30,51 +66,53 @@ export const PatientList: React.FC = () => {
             <div className="text-subtle-light dark:text-subtle-dark flex items-center justify-center pl-4">
               <Icon name="search" />
             </div>
-            <input className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-subtle-light dark:placeholder:text-subtle-dark px-2 text-base font-normal leading-normal" placeholder="Buscar por nome..." />
+            <input value={search} onChange={(e) => setSearch(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-0 border-none bg-transparent h-full placeholder:text-subtle-light dark:placeholder:text-subtle-dark px-2 text-base font-normal leading-normal" placeholder="Buscar por nome ou telefone..." />
           </div>
         </label>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
-        <table className="w-full">
-          <thead className="border-b border-border-light dark:border-border-dark">
-            <tr>
-              <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Paciente</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Status Financeiro</th>
-              <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {patients.map((p, i) => (
-              <tr key={i} className="border-b border-border-light dark:border-border-dark hover:bg-primary/5 cursor-pointer" onClick={() => navigate('/patients/1')}>
-                <td className="h-20 px-6 py-2">
-                  <div className="flex items-center gap-4">
-                    {p.img ? (
-                      <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style={{ backgroundImage: `url("${p.img}")` }}></div>
-                    ) : (
-                      <div className={`flex items-center justify-center font-bold rounded-full size-10 ${p.color}`}>
-                        <span>{p.initials}</span>
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-text-light dark:text-text-dark">{p.name}</span>
-                  </div>
-                </td>
-                <td className="h-20 px-6 py-2">
-                  <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold
-                    ${p.status === 'Em dia' ? 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300' : ''}
-                    ${p.status === 'Pendente' ? 'bg-orange-100 text-orange-800 dark:bg-orange-900/50 dark:text-orange-300' : ''}
-                    ${p.status === 'Atrasado' ? 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300' : ''}
-                  `}>
-                    {p.status}
-                  </span>
-                </td>
-                <td className="h-20 px-6 py-2 text-right">
-                  <span className="text-sm font-bold text-primary hover:underline">Ver Perfil</span>
-                </td>
+        {isLoading ? (
+          <div className="p-8 text-center">Carregando pacientes...</div>
+        ) : error ? (
+          <div className="p-8 text-center text-red-600">{error}</div>
+        ) : patients.length === 0 ? (
+          <div className="p-8 text-center">Nenhum paciente encontrado.</div>
+        ) : (
+          <table className="w-full">
+            <thead className="border-b border-border-light dark:border-border-dark">
+              <tr>
+                <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Paciente</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Status Financeiro</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark"></th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {patients.map((p) => (
+                <tr key={p.id} className="border-b border-border-light dark:border-border-dark hover:bg-primary/5 cursor-pointer" onClick={() => navigate(`/patients/${p.id}`)}>
+                  <td className="h-20 px-6 py-2">
+                    <div className="flex items-center gap-4">
+                      {p.avatar_url || p.img ? (
+                        <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style={{ backgroundImage: `url("${p.avatar_url ?? p.img}")` }}></div>
+                      ) : (
+                        <div className={`flex items-center justify-center font-bold rounded-full size-10 bg-gray-200 text-gray-700`}>
+                          <span>{(p.name || '').split(' ').map((n: string) => n[0]).slice(0,2).join('')}</span>
+                        </div>
+                      )}
+                      <span className="text-sm font-medium text-text-light dark:text-text-dark">{p.name}</span>
+                    </div>
+                  </td>
+                  <td className="h-20 px-6 py-2">
+                    <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold`}>{p.financial_status ?? p.status ?? '—'}</span>
+                  </td>
+                  <td className="h-20 px-6 py-2 text-right">
+                    <span className="text-sm font-bold text-primary hover:underline">Ver Perfil</span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </div>
     </div>
   );
