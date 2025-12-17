@@ -11,6 +11,7 @@ import { AppointmentCreate } from './pages/AppointmentCreate';
 import { SessionCreate } from './pages/SessionCreate';
 import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
+import { PatientCreate } from './pages/PatientCreate';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -43,7 +44,7 @@ export default function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/patients" element={<PatientList />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
-          <Route path="/patients/new" element={<div className="text-center p-10">Patient Creation Form Placeholder</div>} />
+          <Route path="/patients/new" element={<PatientCreate />} />
 
           <Route path="/agenda" element={<Agenda />} />
 
