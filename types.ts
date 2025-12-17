@@ -179,4 +179,5 @@ export type IconName =
   | 'wallet'
   | 'person_add'
   | 'error'
-  | 'hourglass_top';
+  | 'hourglass_top'
+  | 'assignment';

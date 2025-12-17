@@ -6,7 +6,7 @@ export const Sidebar: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const isActive = (path: string) => location.pathname === path;
+  const isActive = (path: string) => location.pathname.startsWith(path);
 
   const handleLogout = () => {
     navigate('/');
@@ -37,6 +37,10 @@ export const Sidebar: React.FC = () => {
           <Link to="/patients" className={navItemClass('/patients')}>
             <Icon name="group" filled={isActive('/patients')} />
             <p className="text-sm leading-normal">Pacientes</p>
+          </Link>
+          <Link to="/sessions" className={navItemClass('/sessions')}>
+            <Icon name="assignment" filled={isActive('/sessions')} />
+            <p className="text-sm leading-normal">Sessões</p>
           </Link>
           <Link to="/agenda" className={navItemClass('/agenda')}>
             <Icon name="calendar_month" filled={isActive('/agenda')} />
