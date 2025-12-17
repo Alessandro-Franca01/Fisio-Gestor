@@ -74,9 +74,9 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
         patient_name: appt.patient?.name || appt.patient_name || 'Paciente não encontrado',
         date: date,
         scheduled_time: time,
-        type: appt.type || 'Consulta',
-        status: appt.status || 'Agendado',
-        color: getAppointmentColor(appt.type || 'Consulta')
+        type: appt.type || 'Fisioterapia',
+        status: appt.status || 'Pendente',
+        color: getAppointmentColor(appt.type || 'Fisioterapia')
       };
     });
     
@@ -115,4 +115,70 @@ export const generateWeekDays = (startDate: Date) => {
     fullDate: format(date, 'yyyy-MM-dd'),
     dayIndex: index
   }));
+};
+
+export const createAppointment = async (payload: {
+  patient_id: number;
+  session_id?: number | null;
+  date: string; // YYYY-MM-DD
+  scheduled_time: string; // HH:mm
+  type: string;
+  status?: string;
+  observations?: string | null;
+}) => {
+  try {
+    const response = await api.post('/appointments', payload);
+    // Laravel usually returns the created resource in response.data (or response.data.data)
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    // Re-throw error so caller can handle (422, 401, etc)
+    throw error;
+  }
+};
+
+export const getAppointmentById = async (id: string): Promise<any> => {
+  try {
+    const response = await api.get(`/appointments/${id}`);
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    console.error('Error fetching appointment by id:', error);
+    throw error;
+  }
+};
+
+export const updateAppointmentStatus = async (
+  id: string,
+  status: 'Confirmado' | 'Cancelado' | 'Pendente'
+): Promise<any> => {
+  try {
+    const response = await api.patch(`/appointments/${id}/status`, { status });
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    console.error('Error updating appointment status:', error);
+    throw error;
+  }
+};
+
+export const deleteAppointment = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/appointments/${id}`);
+  } catch (error) {
+    console.error('Error deleting appointment:', error);
+    throw error;
+  }
+};
+
+export const executeAppointment = async (id: string, payload: {
+  start_time: any;
+  end_time: any;
+  session_notes?: string | null;
+  status: 'Realizado';
+}) => {
+  try {
+    const response = await api.post(`/appointments/${id}/execute`, payload);
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    console.error('Error executing appointment:', error);
+    throw error;
+  }
 };

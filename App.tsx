@@ -49,6 +49,7 @@ export default function App() {
 
           <Route path="/appointments/new" element={<AppointmentCreate />} />
           <Route path="/appointments/execute" element={<AppointmentExecute />} />
+          <Route path="/appointments/:id" element={<AppointmentExecute />} />
 
           <Route path="/sessions/new" element={<SessionCreate />} />
 

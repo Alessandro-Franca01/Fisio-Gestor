@@ -1,12 +1,75 @@
-import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { createAppointment } from '../services/appointmentService';
 
 export const AppointmentCreate: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+
+  const [patientId, setPatientId] = useState<number | ''>('');
+  const [date, setDate] = useState('');
+  const [time, setTime] = useState('');
+  const [type, setType] = useState('Fisioterapia');
+  const [observations, setObservations] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const qDate = params.get('date');
+    const qTime = params.get('time');
+    if (qDate) setDate(qDate);
+    if (qTime) setTime(qTime);
+  }, [location.search]);
+
+  const handleSubmit = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setError(null);
+    if (!patientId) {
+      setError('Selecione um paciente.');
+      return;
+    }
+    if (!date || !time) {
+      setError('Preencha data e hora do atendimento.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const payload = {
+        patient_id: Number(patientId),
+        date: date, // expecting YYYY-MM-DD
+        scheduled_time: time, // expecting HH:MM
+        type,
+        observations: observations || null,
+      } as any;
+
+      const created = await createAppointment(payload);
+      const createdId = created?.id ?? created?.data?.id;
+      if (createdId) {
+        navigate(`/appointments/${createdId}`);
+      } else if (created && created.id) {
+        navigate(`/appointments/${created.id}`);
+      } else {
+        navigate('/appointments');
+      }
+    } catch (err: any) {
+      if (err?.response?.status === 422) {
+        const messages = err.response.data?.errors ? Object.values(err.response.data.errors).flat().join(' ') : err.response.data?.message || 'Erro de validação.';
+        setError(messages);
+      } else if (err?.response?.status === 401) {
+        navigate('/login');
+      } else {
+        setError('Erro ao salvar agendamento. Tente novamente.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
       <header className="mb-8">
         <h1 className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Cadastrar Novo Atendimento</h1>
         <p className="text-subtle-light dark:text-subtle-dark mt-1">Preencha os dados abaixo para agendar uma nova consulta.</p>
@@ -21,7 +84,7 @@ export const AppointmentCreate: React.FC = () => {
             <div className="md:col-span-1">
               <label className="flex flex-col">
                 <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Buscar Paciente</p>
-                <select className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base">
+                <select value={patientId} onChange={e => setPatientId(e.target.value ? Number(e.target.value) : '')} className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base">
                   <option value="">Busque e selecione um paciente</option>
                   <option value="1">Ana Clara Souza</option>
                   <option value="2">Bruno Medeiros</option>
@@ -46,11 +109,11 @@ export const AppointmentCreate: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Data do Atendimento</p>
-              <input className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="date" />
+              <input value={date} onChange={e => setDate(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="date" />
             </label>
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Hora do Atendimento</p>
-              <input className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="time" />
+              <input value={time} onChange={e => setTime(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="time" />
             </label>
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Status</p>
@@ -60,16 +123,18 @@ export const AppointmentCreate: React.FC = () => {
           <div className="mt-6">
             <label className="flex flex-col w-full">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Observações</p>
-              <textarea className="form-textarea flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-28 px-4 py-3 text-base" placeholder="Adicione notas sobre o atendimento..."></textarea>
+              <textarea value={observations} onChange={e => setObservations(e.target.value)} className="form-textarea flex w-full min-w-0 flex-1 resize-y overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-28 px-4 py-3 text-base" placeholder="Adicione notas sobre o atendimento..."></textarea>
             </label>
           </div>
         </section>
-
-        <div className="flex justify-end gap-4 pt-4">
-          <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
-          <button className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-colors" type="submit">Salvar Agendamento</button>
+        <div className="flex justify-between items-center gap-4 pt-4">
+          <div className="text-left text-sm text-red-600">{error}</div>
+          <div className="flex justify-end gap-4">
+            <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
+            <button disabled={isSubmitting} className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-colors disabled:opacity-60" type="submit">{isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}</button>
+          </div>
         </div>
       </div>
-    </div>
+    </form>
   );
 };
