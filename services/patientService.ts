@@ -13,6 +13,11 @@ export interface Patient {
   status?: string;
   notes?: string;
   addresses?: any[];
+  sessions?: any[];
+  appointments?: any[];
+  payments?: any[];
+  total_to_pay?: number;
+  total_paid?: number;
 }
 
 export const getPatients = async (params?: any): Promise<any> => {
