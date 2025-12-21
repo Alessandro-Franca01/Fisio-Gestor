@@ -27,6 +27,11 @@ export enum AppointmentStatus {
   NO_SHOW = 'Não Compareceu'
 }
 
+export enum AppointmentCategory {
+  PRIVATE = 'Privado',
+  CLINIC = 'Clínica'
+}
+
 export enum PaymentMethod {
   PIX = 'Pix',
   CASH = 'Dinheiro',
@@ -121,6 +126,9 @@ export interface Appointment {
   endTime: string; // HH:mm
   
   status: AppointmentStatus;
+  category: AppointmentCategory;
+  slotIndex?: number; // 0-3 para atendimentos em clínica
+  
   type: string; // ex: "Fisioterapia", "Pilates", "Avaliação"
   location?: string;
   
@@ -156,7 +164,6 @@ export interface FinancialRecord {
 }
 
 // Tipo para os ícones do sistema (Frontend UI)
-// Added 'lock' to the IconName union to resolve type mismatch in SessionEdit.tsx
 export type IconName = 
   | 'dashboard' 
   | 'group' 
@@ -184,4 +191,6 @@ export type IconName =
   | 'hourglass_top'
   | 'assignment'
   | 'filter_list'
-  | 'lock';
+  | 'lock'
+  | 'domain'
+  | 'person';
