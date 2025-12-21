@@ -68,6 +68,54 @@ export const SessionCreate: React.FC = () => {
     }
   };
 
+  const generateAppointments = () => {
+    const total = parseInt(formData.total_appointments);
+    if (!total || isNaN(total)) return [];
+
+    const appointments = [];
+    let currentDate = new Date(formData.start_date + 'T00:00:00'); // Ensure local time treatment
+    let count = 0;
+
+    // Sort schedules by day of week
+    const dayMap: { [key: string]: number } = {
+      'Domingo': 0, 'Segunda-feira': 1, 'Terça-feira': 2,
+      'Quarta-feira': 3, 'Quinta-feira': 4, 'Sexta-feira': 5, 'Sábado': 6
+    };
+
+    const sortedSchedules = [...formData.schedules].sort((a, b) => {
+      const dayDiff = dayMap[a.day_of_week] - dayMap[b.day_of_week];
+      if (dayDiff !== 0) return dayDiff;
+      return a.time.localeCompare(b.time);
+    });
+
+    // Safety break to prevent infinite loops
+    let iterations = 0;
+    const maxIterations = 365 * 2; // 2 years max
+
+    while (count < total && iterations < maxIterations) {
+      const currentDay = currentDate.getDay(); // 0 (Sun) to 6 (Sat)
+
+      for (const schedule of sortedSchedules) {
+        if (dayMap[schedule.day_of_week] === currentDay) {
+          if (count < total) {
+            appointments.push({
+              date: currentDate.toISOString().split('T')[0],
+              time: schedule.time,
+              day_of_week: schedule.day_of_week
+            });
+            count++;
+          }
+        }
+      }
+
+      // Move to next day
+      currentDate.setDate(currentDate.getDate() + 1);
+      iterations++;
+    }
+
+    return appointments;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.patient_id) {
@@ -77,10 +125,13 @@ export const SessionCreate: React.FC = () => {
 
     setLoading(true);
     try {
+      const generatedAppointments = generateAppointments();
+
       await sessionService.createSession({
         ...formData,
         total_appointments: parseInt(formData.total_appointments),
-        total_value: parseFloat(formData.total_value.replace(',', '.'))
+        total_value: parseFloat(formData.total_value.replace(',', '.')),
+        appointments: generatedAppointments
       });
       navigate('/sessions');
     } catch (error) {

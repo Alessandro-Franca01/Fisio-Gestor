@@ -162,7 +162,9 @@ export const SessionDetail: React.FC = () => {
                                 session.appointments.map((item) => (
                                     <tr key={item.id} className="hover:bg-primary/5 transition-colors">
                                         <td className="p-4 font-medium text-text-light dark:text-text-dark">
-                                            {new Date(`${item.date}T${item.time}`).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}
+                                            {item.date && item.scheduled_time ? (
+                                                new Date(`${item.date.substring(0, 10)}T${item.scheduled_time.substring(0, 5)}`).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })
+                                            ) : '-'}
                                         </td>
                                         <td className="p-4">
                                             <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium 
