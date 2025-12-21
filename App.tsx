@@ -12,6 +12,8 @@ import { SessionCreate } from './pages/SessionCreate';
 import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
 import { PatientCreate } from './pages/PatientCreate';
+import { SessionList } from './pages/SessionList';
+import { SessionDetail } from './pages/SessionDetail';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -52,7 +54,10 @@ export default function App() {
           <Route path="/appointments/execute" element={<AppointmentExecute />} />
           <Route path="/appointments/:id" element={<AppointmentExecute />} />
 
+          <Route path="/sessions" element={<SessionList />} />
           <Route path="/sessions/new" element={<SessionCreate />} />
+          <Route path="/sessions/:id" element={<SessionDetail />} />
+          <Route path="/sessions/:id/edit" element={<SessionCreate />} />
 
           <Route path="/finance" element={<Finance />} />
         </Route>

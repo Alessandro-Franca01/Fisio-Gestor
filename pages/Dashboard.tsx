@@ -108,7 +108,7 @@ export const Dashboard: React.FC = () => {
                   <div className="flex flex-1 flex-col">
                     <p className="font-semibold text-text-light dark:text-text-dark">{item.patient?.name}</p>
                     <p className="text-sm text-subtle-light dark:text-subtle-dark">
-                      {new Date(item.date).toLocaleDateString('pt-BR')} às {item.scheduled_time}
+                      {new Date(item.date.substring(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR')} às {item.scheduled_time}
                     </p>
                     <p className="text-sm text-subtle-light dark:text-subtle-dark">{item.location || 'Local não informado'}</p>
                   </div>
@@ -138,7 +138,7 @@ export const Dashboard: React.FC = () => {
                   </div>
                   <div className="flex flex-1 flex-col">
                     <p className="font-semibold text-text-light dark:text-text-dark">{item.patient?.name}</p>
-                    <p className="text-sm text-subtle-light dark:text-subtle-dark">Atendimento de {new Date(item.date).toLocaleDateString('pt-BR')}</p>
+                    <p className="text-sm text-subtle-light dark:text-subtle-dark">Atendimento de {new Date(item.date.substring(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                   </div>
                   <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300">Aguardando Registro</span>
                 </div>

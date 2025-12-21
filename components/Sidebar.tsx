@@ -38,6 +38,10 @@ export const Sidebar: React.FC = () => {
             <Icon name="group" filled={isActive('/patients')} />
             <p className="text-sm leading-normal">Pacientes</p>
           </Link>
+          <Link to="/sessions" className={navItemClass('/sessions')}>
+            <Icon name="assignment" filled={isActive('/sessions')} />
+            <p className="text-sm leading-normal">Sessões</p>
+          </Link>
           <Link to="/agenda" className={navItemClass('/agenda')}>
             <Icon name="calendar_month" filled={isActive('/agenda')} />
             <p className="text-sm leading-normal">Agenda</p>
