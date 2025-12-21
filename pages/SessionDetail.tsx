@@ -54,7 +54,10 @@ export const SessionDetail: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-3">
-            <button className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark text-sm font-bold shadow-sm hover:bg-primary/10 transition-colors">
+          <button 
+            onClick={() => navigate(`/sessions/${id}/edit`)}
+            className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark text-sm font-bold shadow-sm hover:bg-primary/10 transition-colors"
+          >
             <Icon name="edit" />
             <span className="truncate">Editar</span>
           </button>

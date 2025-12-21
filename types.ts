@@ -1,3 +1,4 @@
+
 // Enums para padronização de dados
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -155,6 +156,7 @@ export interface FinancialRecord {
 }
 
 // Tipo para os ícones do sistema (Frontend UI)
+// Added 'lock' to the IconName union to resolve type mismatch in SessionEdit.tsx
 export type IconName = 
   | 'dashboard' 
   | 'group' 
@@ -181,4 +183,5 @@ export type IconName =
   | 'error'
   | 'hourglass_top'
   | 'assignment'
-  | 'filter_list';
+  | 'filter_list'
+  | 'lock';
