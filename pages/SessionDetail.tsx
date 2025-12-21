@@ -103,7 +103,8 @@ export const SessionDetail: React.FC = () => {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-border-light dark:border-border-dark pt-6">
                         <div>
                             <p className="text-sm text-subtle-light dark:text-subtle-dark mb-1">Início</p>
-                            <p className="font-semibold text-text-light dark:text-text-dark">{new Date(session.start_date).toLocaleDateString('pt-BR')}</p>
+                            {/* (`${item.date.substring(0, 10)}T${item.scheduled_time.substring(0, 5)}`) */}
+                            <p className="font-semibold text-text-light dark:text-text-dark">{new Date(session.start_date.substring(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                         </div>
                         <div>
                             <p className="text-sm text-subtle-light dark:text-subtle-dark mb-1">Status</p>

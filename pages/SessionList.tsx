@@ -43,8 +43,8 @@ export const SessionList: React.FC = () => {
         <button
           onClick={() => setFilter('Ativa')}
           className={`pb-3 text-sm font-semibold transition-colors relative ${filter === 'Ativa'
-              ? 'text-primary after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-primary'
-              : 'text-subtle-light dark:text-subtle-dark hover:text-text-light dark:hover:text-text-dark'
+            ? 'text-primary after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-primary'
+            : 'text-subtle-light dark:text-subtle-dark hover:text-text-light dark:hover:text-text-dark'
             }`}
         >
           Em Andamento
@@ -52,8 +52,8 @@ export const SessionList: React.FC = () => {
         <button
           onClick={() => setFilter('Concluída')}
           className={`pb-3 text-sm font-semibold transition-colors relative ${filter === 'Concluída'
-              ? 'text-primary after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-primary'
-              : 'text-subtle-light dark:text-subtle-dark hover:text-text-light dark:hover:text-text-dark'
+            ? 'text-primary after:absolute after:bottom-0 after:left-0 after:h-0.5 after:w-full after:bg-primary'
+            : 'text-subtle-light dark:text-subtle-dark hover:text-text-light dark:hover:text-text-dark'
             }`}
         >
           Concluídos
@@ -79,7 +79,7 @@ export const SessionList: React.FC = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-text-light dark:text-text-dark">{session.patient?.name || 'Paciente'}</h3>
-                  <p className="text-sm text-subtle-light dark:text-subtle-dark">Início: {new Date(session.start_date).toLocaleDateString('pt-BR')}</p>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">Início: {new Date(session.start_date.substring(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR')}</p>
                 </div>
               </div>
 

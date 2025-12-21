@@ -178,7 +178,7 @@ export const PatientDetail: React.FC = () => {
                     filteredSessions.map((session) => (
                       <tr key={session.id} className="hover:bg-primary/5 transition-colors">
                         <td className="py-3 px-4 font-medium text-text-light dark:text-text-dark">{session.title || `#${session.id}`}</td>
-                        <td className="py-3 px-4 text-text-light dark:text-text-dark">{new Date(session.start_date).toLocaleDateString('pt-BR')}</td>
+                        <td className="py-3 px-4 text-text-light dark:text-text-dark">{new Date(session.start_date.substring(0, 10) + 'T00:00:00').toLocaleDateString('pt-BR')}</td>
                         <td className="py-3 px-4 text-text-light dark:text-text-dark font-medium text-xs">
                           {session.schedules?.map(s => s.day_of_week.substring(0, 3)).join(', ')}
                         </td>
