@@ -2,19 +2,25 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from '../components/Icon';
 import paymentService, { Payment } from '../services/paymentService';
 import { getPatients } from '../services/patientService';
+
 import { getSessions, Session } from '../services/sessionService';
+import { getAppointmentsByPatient, Appointment } from '../services/appointmentService';
 
 export const Finance: React.FC = () => {
   const [payments, setPayments] = useState<Payment[]>([]);
   const [patients, setPatients] = useState<any[]>([]);
   const [patientSessions, setPatientSessions] = useState<Session[]>([]);
+  const [patientAppointments, setPatientAppointments] = useState<Appointment[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [loadingAppointments, setLoadingAppointments] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Form State
   const [selectedPatient, setSelectedPatient] = useState('');
+
   const [selectedSession, setSelectedSession] = useState('');
+  const [selectedAppointment, setSelectedAppointment] = useState('');
   const [amount, setAmount] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('Pix');
   const [status, setStatus] = useState('Pago');
@@ -67,28 +73,39 @@ export const Finance: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchPatientSessions = async () => {
+    const sessionIsNull = true;
+    const fetchPatientData = async () => {
       if (!selectedPatient) {
         setPatientSessions([]);
+        setPatientAppointments([]);
         setSelectedSession('');
+        setSelectedAppointment('');
         return;
       }
 
+      setLoadingSessions(true);
+      setLoadingAppointments(true);
+
       try {
-        setLoadingSessions(true);
-        const sessionsData = await getSessions({
-          patient_id: selectedPatient,
-          status: 'Ativa'
-        });
+        const [sessionsData, appointmentsData] = await Promise.all([
+          getSessions({ patient_id: selectedPatient, status: 'Ativa' }),
+          getAppointmentsByPatient(selectedPatient, {
+            status: 'Pendente',
+            sessionIsNull: sessionIsNull ? true : undefined
+          }) // Fetch pending appointments
+        ]);
+
         setPatientSessions(sessionsData.data || sessionsData);
+        setPatientAppointments(appointmentsData);
       } catch (err) {
-        console.error('Error fetching patient sessions:', err);
+        console.error('Error fetching patient data:', err);
       } finally {
         setLoadingSessions(false);
+        setLoadingAppointments(false);
       }
     };
 
-    fetchPatientSessions();
+    fetchPatientData();
   }, [selectedPatient]);
 
   const handleRegisterPayment = async (e: React.FormEvent) => {
@@ -102,6 +119,7 @@ export const Finance: React.FC = () => {
       const payload: Partial<Payment> = {
         patient_id: Number(selectedPatient),
         session_id: selectedSession ? Number(selectedSession) : undefined,
+        appointment_id: selectedAppointment ? Number(selectedAppointment) : undefined,
         amount: parseFloat(amount.replace(',', '.')),
         payment_date: new Date().toISOString().split('T')[0], // Today
         payment_method: paymentMethod as any,
@@ -115,6 +133,7 @@ export const Finance: React.FC = () => {
       // Reset form
       setSelectedPatient('');
       setSelectedSession('');
+      setSelectedAppointment('');
       setAmount('');
       setNotes('');
 
@@ -206,21 +225,40 @@ export const Finance: React.FC = () => {
               </select>
             </label>
             <label className="flex flex-col col-span-1">
-              <p className="text-text-light dark:text-text-dark text-sm font-medium leading-normal pb-2">Sessão/Atendimento (Opcional)</p>
+              <p className="text-text-light dark:text-text-dark text-sm font-medium leading-normal pb-2">Sessão (Opcional)</p>
               <select
                 value={selectedSession}
                 onChange={(e) => {
-                  const sessionId = e.target.value;
-                  setSelectedSession(sessionId);
-                  // Optional: auto-fill amount from session if balance is known
+                  setSelectedSession(e.target.value);
+                  if (e.target.value) setSelectedAppointment(''); // Clear appointment if session is selected
                 }}
                 disabled={!selectedPatient || loadingSessions}
                 className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-3 text-base disabled:opacity-50"
               >
-                <option value="">{loadingSessions ? 'Carregando sessões...' : 'Selecione uma sessão'}</option>
+                <option value="">{loadingSessions ? 'Carregando...' : 'Selecione uma sessão'}</option>
                 {patientSessions.map(session => (
                   <option key={session.id} value={session.id}>
-                    {session.title || `Sessão #${session.id}`} ({formatDate(session.start_date)})
+                    {session.title || `Sessão #${session.id}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col col-span-1">
+              <p className="text-text-light dark:text-text-dark text-sm font-medium leading-normal pb-2">Atendimento (Opcional)</p>
+              <select
+                value={selectedAppointment}
+                onChange={(e) => {
+                  setSelectedAppointment(e.target.value);
+                  if (e.target.value) setSelectedSession(''); // Clear session if appointment is selected
+                }}
+                disabled={!selectedPatient || loadingAppointments}
+                className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-3 text-base disabled:opacity-50"
+              >
+                <option value="">{loadingAppointments ? 'Carregando...' : 'Selecione um atendimento'}</option>
+                {patientAppointments.map(appt => (
+                  <option key={appt.id} value={appt.id}>
+                    {appt.type} - {formatDate(appt.date)} {appt.scheduled_time}
                   </option>
                 ))}
               </select>
