@@ -111,7 +111,12 @@ export const Finance: React.FC = () => {
   const handleRegisterPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedPatient || !amount) {
-      alert('Preencha os campos obrigatórios.');
+      alert('Preencha os campos obrigatórios (Paciente e Valor).');
+      return;
+    }
+
+    if (selectedSession && selectedAppointment) {
+      alert('Não é possível vincular um pagamento a uma sessão e a um atendimento ao mesmo tempo. Selecione apenas um.');
       return;
     }
 
@@ -186,7 +191,7 @@ export const Finance: React.FC = () => {
   return (
     <div className="flex flex-col w-full">
       <div className="flex flex-wrap justify-between gap-3 pb-6">
-        <p className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Módulo Financeiro</p>
+        <p className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Financeiro</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
