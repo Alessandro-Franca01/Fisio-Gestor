@@ -20,20 +20,45 @@ export const Finance: React.FC = () => {
   const [status, setStatus] = useState('Pago');
   const [notes, setNotes] = useState('');
 
-  const fetchData = async () => {
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [totalRecords, setTotalRecords] = useState(0);
+  const [totalCollected, setTotalCollected] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+
+
+  const fetchData = async (page = 1) => {
     try {
       setLoading(true);
       const [paymentsData, patientsData] = await Promise.all([
-        paymentService.getPayments(),
+        paymentService.getPayments({ page }),
         getPatients()
       ]);
-      setPayments(paymentsData.data || paymentsData);
+
+      if (paymentsData && paymentsData.data) {
+        setPayments(paymentsData.data);
+        setCurrentPage(paymentsData.current_page);
+        setLastPage(paymentsData.last_page);
+        setTotalRecords(paymentsData.total);
+        setTotalCollected(paymentsData.total_collected || 0);
+        setTotalPending(paymentsData.total_pending || 0);
+      } else {
+        setPayments(Array.isArray(paymentsData) ? paymentsData : []);
+      }
+
       setPatients(patientsData);
     } catch (err) {
       console.error(err);
       setError('Erro ao carregar dados financeiros.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= lastPage) {
+      fetchData(page);
     }
   };
 
@@ -135,9 +160,9 @@ export const Finance: React.FC = () => {
     }
   };
 
-  // Calculate totals
-  const totalMonth = payments.reduce((acc, curr) => acc + Number(curr.amount), 0); // Simplified total
-  const pendingPayments = payments.filter(p => p.status === 'Pendente').reduce((acc, curr) => acc + Number(curr.amount), 0);
+  // Calculate totals - Now using values from API
+  const displayTotalCollected = totalCollected;
+  const displayPendingPayments = totalPending;
 
   return (
     <div className="flex flex-col w-full">
@@ -148,12 +173,12 @@ export const Finance: React.FC = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <div className="flex flex-col gap-2 rounded-xl p-6 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
           <p className="text-subtle-light dark:text-subtle-dark text-base font-medium leading-normal">Total Arrecadado (Geral)</p>
-          <p className="text-text-light dark:text-text-dark tracking-light text-3xl font-bold leading-tight">{formatCurrency(totalMonth)}</p>
+          <p className="text-text-light dark:text-text-dark tracking-light text-3xl font-bold leading-tight">{formatCurrency(displayTotalCollected)}</p>
           {/* <p className="text-green-600 dark:text-green-400 text-sm font-medium leading-normal">+5.2%</p> */}
         </div>
         <div className="flex flex-col gap-2 rounded-xl p-6 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
           <p className="text-subtle-light dark:text-subtle-dark text-base font-medium leading-normal">Pagamentos Pendentes</p>
-          <p className="text-text-light dark:text-text-dark tracking-light text-3xl font-bold leading-tight">{formatCurrency(pendingPayments)}</p>
+          <p className="text-text-light dark:text-text-dark tracking-light text-3xl font-bold leading-tight">{formatCurrency(displayPendingPayments)}</p>
           {/* <p className="text-yellow-600 dark:text-yellow-400 text-sm font-medium leading-normal">+10%</p> */}
         </div>
         <div className="flex flex-col gap-2 rounded-xl p-6 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark">
@@ -303,6 +328,82 @@ export const Finance: React.FC = () => {
               </tbody>
             </table>
           </div>
+          {/* Pagination Controls */}
+          {lastPage > 1 && (
+            <div className="flex items-center justify-between border-t border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark px-4 py-3 sm:px-6">
+              <div className="flex flex-1 justify-between sm:hidden">
+                <button
+                  onClick={() => handlePageChange(currentPage - 1)}
+                  disabled={currentPage === 1}
+                  className="relative inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => handlePageChange(currentPage + 1)}
+                  disabled={currentPage === lastPage}
+                  className="relative ml-3 inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-50"
+                >
+                  Próximo
+                </button>
+              </div>
+              <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+                <div>
+                  <p className="text-sm text-subtle-light dark:text-subtle-dark">
+                    Mostrando <span className="font-medium">{(currentPage - 1) * 10 + 1}</span> a{' '}
+                    <span className="font-medium">{Math.min(currentPage * 10, totalRecords)}</span> de{' '}
+                    <span className="font-medium">{totalRecords}</span> resultados
+                  </p>
+                </div>
+                <div>
+                  <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    <button
+                      onClick={() => handlePageChange(currentPage - 1)}
+                      disabled={currentPage === 1}
+                      className="relative inline-flex items-center rounded-l-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-primary/10 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Anterior</span>
+                      <Icon name="chevron_left" className="h-5 w-5" />
+                    </button>
+                    {/* Page Numbers */}
+                    {Array.from({ length: Math.min(5, lastPage) }, (_, i) => {
+                      let pageNum;
+                      if (lastPage <= 5) {
+                        pageNum = i + 1;
+                      } else if (currentPage <= 3) {
+                        pageNum = i + 1;
+                      } else if (currentPage >= lastPage - 2) {
+                        pageNum = lastPage - 4 + i;
+                      } else {
+                        pageNum = currentPage - 2 + i;
+                      }
+
+                      return (
+                        <button
+                          key={pageNum}
+                          onClick={() => handlePageChange(pageNum)}
+                          className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${currentPage === pageNum
+                            ? 'z-10 bg-primary text-background-dark border-primary'
+                            : 'text-text-light dark:text-text-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-primary/10'
+                            }`}
+                        >
+                          {pageNum}
+                        </button>
+                      );
+                    })}
+                    <button
+                      onClick={() => handlePageChange(currentPage + 1)}
+                      disabled={currentPage === lastPage}
+                      className="relative inline-flex items-center rounded-r-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-primary/10 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                    >
+                      <span className="sr-only">Próximo</span>
+                      <Icon name="chevron_right" className="h-5 w-5" />
+                    </button>
+                  </nav>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -52,6 +52,7 @@ export type IconName =
   | 'check_circle'
   | 'event'
   | 'chevron_right'
+  | 'chevron_left'
   | 'person_search'
   | 'add_circle'
   | 'upload_file'
