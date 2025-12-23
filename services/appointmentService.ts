@@ -17,25 +17,25 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
   try {
     console.group('Fetching Appointments');
     console.log('Date Range:', { startDate, endDate });
-    
+
     const response = await api.get('/appointments', {
       params: {
         start_date: format(startDate, 'yyyy-MM-dd'),
         end_date: format(endDate, 'yyyy-MM-dd'),
       },
     });
-    
+
     console.log('Raw API Response:', response);
-    
+
     // If response is empty or not in expected format, return empty array
     if (!response.data) {
       console.warn('Empty response data');
       return [];
     }
-    
+
     // Try to extract appointments from different possible response structures
     let appointmentsData = [];
-    
+
     if (Array.isArray(response.data)) {
       // Case 1: Direct array response
       appointmentsData = response.data;
@@ -44,16 +44,16 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
       appointmentsData = response.data.data;
     } else if (response.data.appointments) {
       // Case 3: Wrapped in an appointments object
-      appointmentsData = Array.isArray(response.data.appointments) 
-        ? response.data.appointments 
+      appointmentsData = Array.isArray(response.data.appointments)
+        ? response.data.appointments
         : [response.data.appointments];
     } else if (typeof response.data === 'object') {
       // Case 4: Single appointment object
       appointmentsData = [response.data];
     }
-    
+
     console.log('Extracted appointments data:', appointmentsData);
-    
+
     // Map to the expected format for the Agenda component
     const mappedAppointments = appointmentsData.map((appt: any) => {
       // Extract time from scheduled_time if it's a full datetime string
@@ -61,13 +61,13 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
       if (time.includes('T')) {
         time = time.split('T')[1].substring(0, 5); // Extract HH:MM from ISO string
       }
-      
+
       // Format date if needed
       let date = appt.date || appt.scheduled_date;
       if (date && date.includes('T')) {
         date = date.split('T')[0]; // Keep only YYYY-MM-DD
       }
-      
+
       return {
         id: appt.id,
         patient_id: appt.patient_id,
@@ -79,10 +79,10 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
         color: getAppointmentColor(appt.type || 'Fisioterapia')
       };
     });
-    
+
     console.log('Mapped Appointments:', mappedAppointments);
     return mappedAppointments;
-    
+
   } catch (error) {
     console.error('Error in getAppointments:', {
       error,
@@ -101,14 +101,14 @@ const getAppointmentColor = (type: string): string => {
     'Avaliação': 'bg-purple-100 dark:bg-purple-900/40 border-l-4 border-purple-500 text-purple-700 dark:text-purple-300',
     'Reabilitação': 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-500 text-orange-700 dark:text-orange-300',
   };
-  
+
   return colors[type] || 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-400 text-gray-700 dark:text-gray-300';
 };
 
 export const generateWeekDays = (startDate: Date) => {
   const start = startOfWeek(startDate, { locale: ptBR });
   const end = endOfWeek(startDate, { locale: ptBR });
-  
+
   return eachDayOfInterval({ start, end }).map((date, index) => ({
     label: format(date, 'EEE', { locale: ptBR }),
     date: format(date, 'dd'),
@@ -179,6 +179,48 @@ export const executeAppointment = async (id: string, payload: {
     return response.data?.data ?? response.data;
   } catch (error) {
     console.error('Error executing appointment:', error);
+    throw error;
+  }
+};
+
+export const getAppointmentsByPatient = async (patientId: number | string, params?: any): Promise<Appointment[]> => {
+  try {
+    const response = await api.get('/appointments', {
+      params: {
+        patient_id: patientId,
+        ...params
+      }
+    });
+
+    let appointmentsData = [];
+    if (response.data && response.data.data) {
+      appointmentsData = response.data.data;
+    } else if (Array.isArray(response.data)) {
+      appointmentsData = response.data;
+    }
+
+    return appointmentsData.map((appt: any) => ({
+      id: appt.id,
+      patient_id: appt.patient_id,
+      patient_name: appt.patient?.name || '',
+      date: appt.date,
+      scheduled_time: appt.scheduled_time,
+      type: appt.type,
+      status: appt.status,
+      color: getAppointmentColor(appt.type)
+    }));
+  } catch (error) {
+    console.error('Error fetching patient appointments:', error);
+    return [];
+  }
+};
+
+export const getAppointmentBySessionNullAndPatientId = async (patientId: string, status: string): Promise<any> => {
+  try {
+    const response = await api.get(`/appointments?patient_id=${patientId}&session_id=null&status=${status}`);
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    console.error('Error fetching appointment by session null and patient id:', error);
     throw error;
   }
 };
