@@ -15,8 +15,11 @@ import { PatientCreate } from './pages/PatientCreate';
 import { SessionList } from './pages/SessionList';
 import { SessionDetail } from './pages/SessionDetail';
 
+import { Icon } from './components/Icon';
+
 const Layout: React.FC = () => {
   const navigate = useNavigate();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
 
   React.useEffect(() => {
     const token = localStorage.getItem('token');
@@ -26,9 +29,20 @@ const Layout: React.FC = () => {
   }, [navigate]);
 
   return (
-    <div className="flex min-h-screen w-full">
-      <Sidebar />
-      <main className="flex-1 p-8 bg-background-light dark:bg-background-dark overflow-y-auto h-screen">
+    <div className="flex min-h-screen w-full relative">
+      <Sidebar isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
+      {/* Mobile Header/Menu Button */}
+      <div className="md:hidden fixed top-4 right-4 z-40 bg-white dark:bg-gray-800 p-2 rounded-lg shadow-md">
+        <button
+          onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          className="text-text-light dark:text-text-dark"
+        >
+          <Icon name="menu" className="text-2xl" />
+        </button>
+      </div>
+
+      <main className="flex-1 p-8 bg-background-light dark:bg-background-dark overflow-y-auto h-screen w-full">
         <Outlet />
       </main>
     </div>
