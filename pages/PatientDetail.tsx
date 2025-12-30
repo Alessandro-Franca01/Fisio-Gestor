@@ -94,6 +94,7 @@ export const PatientDetail: React.FC = () => {
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">CPF</span><span className="font-medium text-text-light dark:text-text-dark">{patient.cpf || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">RG</span><span className="font-medium text-text-light dark:text-text-dark">{patient.rg || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Telefone</span><span className="font-medium text-text-light dark:text-text-dark">{patient.phone || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Email</span><span className="font-medium text-text-light dark:text-text-dark text-xs">{patient.email || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Contato de Emergência</span><span className="font-medium text-text-light dark:text-text-dark text-right">{patient.emergency_contact_name || '-'} {patient.emergency_contact_phone && `(${patient.emergency_contact_phone})`}</span></div>

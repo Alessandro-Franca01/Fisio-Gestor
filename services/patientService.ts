@@ -6,6 +6,7 @@ export interface Patient {
   email?: string;
   phone?: string;
   cpf?: string;
+  rg?: string;
   birth_date?: string;
   age?: number;
   emergency_contact_name?: string;
