@@ -1,11 +1,12 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api',
-    headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-    },
+  // baseURL: 'https://sistemaspb.shop/api',
+  baseURL: import.meta.env.MODE === 'production' ? 'https://sistemaspb.shop/api' : 'http://localhost:8000/api',
+  headers: {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+  },
 });
 
 // Request interceptor
@@ -18,7 +19,7 @@ api.interceptors.request.use(
     console.log('Headers:', { ...config.headers, Authorization: token ? 'Bearer [TOKEN]' : 'Not set' });
     console.log('Params:', config.params);
     console.groupEnd();
-    
+
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

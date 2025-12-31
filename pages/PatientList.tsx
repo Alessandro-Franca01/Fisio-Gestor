@@ -83,6 +83,8 @@ export const PatientList: React.FC = () => {
             <thead className="border-b border-border-light dark:border-border-dark">
               <tr>
                 <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Paciente</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">RG</th>
+                <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Idade</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark">Status Financeiro</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-subtle-light dark:text-subtle-dark"></th>
               </tr>
@@ -96,11 +98,17 @@ export const PatientList: React.FC = () => {
                         <div className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style={{ backgroundImage: `url("${p.avatar_url ?? p.img}")` }}></div>
                       ) : (
                         <div className={`flex items-center justify-center font-bold rounded-full size-10 bg-gray-200 text-gray-700`}>
-                          <span>{(p.name || '').split(' ').map((n: string) => n[0]).slice(0,2).join('')}</span>
+                          <span>{(p.name || '').split(' ').map((n: string) => n[0]).slice(0, 2).join('')}</span>
                         </div>
                       )}
                       <span className="text-sm font-medium text-text-light dark:text-text-dark">{p.name}</span>
                     </div>
+                  </td>
+                  <td className="h-20 px-6 py-2">
+                    <span className="text-sm text-text-light dark:text-text-dark">{p.rg || '—'}</span>
+                  </td>
+                  <td className="h-20 px-6 py-2">
+                    <span className="text-sm text-text-light dark:text-text-dark">{p.age ? `${p.age} anos` : '—'}</span>
                   </td>
                   <td className="h-20 px-6 py-2">
                     <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold`}>{p.financial_status ?? p.status ?? '—'}</span>

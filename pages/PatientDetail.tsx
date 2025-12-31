@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Icon } from '../components/Icon';
 import { useNavigate, useParams } from 'react-router-dom';
 import patientService, { Patient } from '../services/patientService';
+import addressService, { Address } from '../services/addressService';
 
 export const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -10,21 +11,104 @@ export const PatientDetail: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [sessionFilter, setSessionFilter] = useState<'Ativa' | 'Concluída'>('Ativa');
 
+  // Address Management State
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [addressFormData, setAddressFormData] = useState<Address>({
+    type: 'Residencial',
+    street: '',
+    number: '',
+    complement: '',
+    neighborhood: '',
+    city: '',
+    state: '',
+    cep: '',
+  });
+
   useEffect(() => {
-    const fetchPatient = async () => {
-      if (!id) return;
-      setLoading(true);
-      try {
-        const data = await patientService.getPatientById(id);
-        setPatient(data);
-      } catch (error) {
-        console.error('Failed to fetch patient details', error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchPatient();
   }, [id]);
+
+  const fetchPatient = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      const data = await patientService.getPatientById(id);
+      setPatient(data);
+    } catch (error) {
+      console.error('Failed to fetch patient details', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAddressModal = (address?: Address) => {
+    if (address) {
+      setEditingAddress(address);
+      setAddressFormData({ ...address });
+    } else {
+      setEditingAddress(null);
+      setAddressFormData({
+        type: 'Residencial',
+        street: '',
+        number: '',
+        complement: '',
+        neighborhood: '',
+        city: '',
+        state: '',
+        cep: '',
+      });
+    }
+    setIsAddressModalOpen(true);
+  };
+
+  const handleSaveAddress = async () => {
+    if (!id) return;
+    try {
+      if (editingAddress?.id) {
+        await addressService.updateAddress(editingAddress.id, addressFormData);
+      } else {
+        await addressService.createAddress(id, addressFormData);
+      }
+      setIsAddressModalOpen(false);
+      fetchPatient(); // Reload patient to see updated addresses
+    } catch (error) {
+      console.error('Error saving address:', error);
+      alert('Erro ao salvar endereço.');
+    }
+  };
+
+  const handleDeleteAddress = async (addressId: number) => {
+    if (!window.confirm('Tem certeza que deseja excluir este endereço?')) return;
+    try {
+      await addressService.deleteAddress(addressId);
+      fetchPatient();
+    } catch (error) {
+      console.error('Error deleting address:', error);
+      alert('Erro ao excluir endereço.');
+    }
+  };
+
+  const handleCepBlur = async (cep: string) => {
+    const cleanCep = cep.replace(/\D/g, '');
+    if (cleanCep.length === 8) {
+      try {
+        const response = await fetch(`https://viacep.com.br/ws/${cleanCep}/json/`);
+        const data = await response.json();
+        if (!data.erro) {
+          setAddressFormData(prev => ({
+            ...prev,
+            street: data.logradouro || prev.street,
+            neighborhood: data.bairro || prev.neighborhood,
+            city: data.localidade || prev.city,
+            state: data.uf || prev.state,
+          }));
+        }
+      } catch (error) {
+        console.error('ViaCEP error:', error);
+      }
+    }
+  };
 
   if (loading) {
     return (
@@ -94,27 +178,42 @@ export const PatientDetail: React.FC = () => {
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">CPF</span><span className="font-medium text-text-light dark:text-text-dark">{patient.cpf || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">RG</span><span className="font-medium text-text-light dark:text-text-dark">{patient.rg || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Telefone</span><span className="font-medium text-text-light dark:text-text-dark">{patient.phone || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Email</span><span className="font-medium text-text-light dark:text-text-dark text-xs">{patient.email || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Contato de Emergência</span><span className="font-medium text-text-light dark:text-text-dark text-right">{patient.emergency_contact_name || '-'} {patient.emergency_contact_phone && `(${patient.emergency_contact_phone})`}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Gênero</span><span className="font-medium text-text-light dark:text-text-dark">{patient.gender || 'Não informado'}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Ocupação</span><span className="font-medium text-text-light dark:text-text-dark">{patient.occupation || 'Não informada'}</span></div>
             </div>
           </div>
           {/* Addresses */}
           <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">Endereços</h3>
-              <button className="text-subtle-light dark:text-subtle-dark hover:text-primary transition-colors">
+              <button
+                onClick={() => handleOpenAddressModal()}
+                className="text-subtle-light dark:text-subtle-dark hover:text-primary transition-colors">
                 <Icon name="add_circle" />
               </button>
             </div>
             <div className="space-y-4">
               {patient.addresses && patient.addresses.length > 0 ? (
                 patient.addresses.map((addr) => (
-                  <div key={addr.id} className="border-b last:border-0 border-border-light dark:border-border-dark pb-4 last:pb-0">
-                    <p className="font-medium text-text-light dark:text-text-dark">{addr.type}</p>
+                  <div key={addr.id} className="border-b last:border-0 border-border-light dark:border-border-dark pb-4 last:pb-0 relative group">
+                    <div className="flex justify-between items-start">
+                      <p className="font-medium text-text-light dark:text-text-dark">{addr.type}</p>
+                      <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button onClick={() => handleOpenAddressModal(addr)} className="text-subtle-light dark:text-subtle-dark hover:text-primary">
+                          <Icon name="edit" className="text-sm" />
+                        </button>
+                        <button onClick={() => handleDeleteAddress(addr.id)} className="text-subtle-light dark:text-subtle-dark hover:text-red-500">
+                          <Icon name="delete" className="text-sm" />
+                        </button>
+                      </div>
+                    </div>
                     <p className="text-subtle-light dark:text-subtle-dark text-sm">
                       {addr.street}, {addr.number}{addr.complement && `, ${addr.complement}`}<br />
-                      {addr.neighborhood}, {addr.city} - {addr.state}, {addr.zip_code}
+                      {addr.neighborhood}, {addr.city} - {addr.state}, {addr.cep}
                     </p>
                   </div>
                 ))
@@ -204,8 +303,143 @@ export const PatientDetail: React.FC = () => {
               </table>
             </div>
           </div>
+
+          {/* Observations */}
+          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Icon name="description" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">Observações</h3>
+            </div>
+            <div className="bg-background-light dark:bg-background-dark p-4 rounded-lg border border-border-light dark:border-border-dark min-h-[100px]">
+              <p className="text-text-light dark:text-text-dark whitespace-pre-wrap">
+                {patient.notes || 'Nenhuma observação cadastrada.'}
+              </p>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Address Modal */}
+      {isAddressModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <div className="bg-surface-light dark:bg-surface-dark rounded-xl shadow-xl w-full max-w-md border border-border-light dark:border-border-dark overflow-hidden">
+            <div className="px-6 py-4 border-b border-border-light dark:border-border-dark flex justify-between items-center bg-background-light dark:bg-background-dark">
+              <h3 className="text-lg font-bold text-text-light dark:text-text-dark">
+                {editingAddress ? 'Editar Endereço' : 'Novo Endereço'}
+              </h3>
+              <button onClick={() => setIsAddressModalOpen(false)} className="text-subtle-light hover:text-text-light dark:hover:text-text-dark">
+                <Icon name="close" />
+              </button>
+            </div>
+
+            <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-text-light dark:text-text-dark">Tipo</label>
+                <select
+                  value={addressFormData.type}
+                  onChange={e => setAddressFormData({ ...addressFormData, type: e.target.value as any })}
+                  className="form-select rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                >
+                  <option value="Residencial">Residencial</option>
+                  <option value="Trabalho">Trabalho</option>
+                  <option value="Outro">Outro</option>
+                </select>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-text-light dark:text-text-dark">CEP</label>
+                <input
+                  type="text"
+                  value={addressFormData.cep}
+                  onBlur={e => handleCepBlur(e.target.value)}
+                  onChange={e => setAddressFormData({ ...addressFormData, cep: e.target.value })}
+                  className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  placeholder="00000-000"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-2 col-span-2">
+                  <label className="text-sm font-medium text-text-light dark:text-text-dark">Rua</label>
+                  <input
+                    type="text"
+                    value={addressFormData.street}
+                    onChange={e => setAddressFormData({ ...addressFormData, street: e.target.value })}
+                    className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-text-light dark:text-text-dark">Número</label>
+                  <input
+                    type="text"
+                    value={addressFormData.number}
+                    onChange={e => setAddressFormData({ ...addressFormData, number: e.target.value })}
+                    className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-text-light dark:text-text-dark">Complemento</label>
+                  <input
+                    type="text"
+                    value={addressFormData.complement}
+                    onChange={e => setAddressFormData({ ...addressFormData, complement: e.target.value })}
+                    className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-medium text-text-light dark:text-text-dark">Bairro</label>
+                <input
+                  type="text"
+                  value={addressFormData.neighborhood}
+                  onChange={e => setAddressFormData({ ...addressFormData, neighborhood: e.target.value })}
+                  className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="flex flex-col gap-2 col-span-2">
+                  <label className="text-sm font-medium text-text-light dark:text-text-dark">Cidade</label>
+                  <input
+                    type="text"
+                    value={addressFormData.city}
+                    onChange={e => setAddressFormData({ ...addressFormData, city: e.target.value })}
+                    className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm font-medium text-text-light dark:text-text-dark">UF</label>
+                  <input
+                    type="text"
+                    maxLength={2}
+                    value={addressFormData.state}
+                    onChange={e => setAddressFormData({ ...addressFormData, state: e.target.value.toUpperCase() })}
+                    className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="px-6 py-4 border-t border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark flex justify-end gap-3">
+              <button
+                onClick={() => setIsAddressModalOpen(false)}
+                className="px-4 py-2 text-sm font-bold text-subtle-light hover:text-text-light dark:text-subtle-dark dark:hover:text-text-dark transition-colors"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveAddress}
+                className="px-6 py-2 bg-primary text-background-dark rounded-lg text-sm font-bold hover:opacity-90 shadow-sm"
+              >
+                Salvar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
