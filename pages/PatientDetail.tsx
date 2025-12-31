@@ -182,6 +182,8 @@ export const PatientDetail: React.FC = () => {
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Telefone</span><span className="font-medium text-text-light dark:text-text-dark">{patient.phone || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Email</span><span className="font-medium text-text-light dark:text-text-dark text-xs">{patient.email || '-'}</span></div>
               <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Contato de Emergência</span><span className="font-medium text-text-light dark:text-text-dark text-right">{patient.emergency_contact_name || '-'} {patient.emergency_contact_phone && `(${patient.emergency_contact_phone})`}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Gênero</span><span className="font-medium text-text-light dark:text-text-dark">{patient.gender || 'Não informado'}</span></div>
+              <div className="flex justify-between"><span className="text-subtle-light dark:text-subtle-dark">Ocupação</span><span className="font-medium text-text-light dark:text-text-dark">{patient.occupation || 'Não informada'}</span></div>
             </div>
           </div>
           {/* Addresses */}
@@ -299,6 +301,21 @@ export const PatientDetail: React.FC = () => {
                   )}
                 </tbody>
               </table>
+            </div>
+          </div>
+
+          {/* Observations */}
+          <div className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 col-span-1 md:col-span-2">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                <Icon name="description" />
+              </div>
+              <h3 className="text-lg font-semibold text-text-light dark:text-text-dark">Observações</h3>
+            </div>
+            <div className="bg-background-light dark:bg-background-dark p-4 rounded-lg border border-border-light dark:border-border-dark min-h-[100px]">
+              <p className="text-text-light dark:text-text-dark whitespace-pre-wrap">
+                {patient.notes || 'Nenhuma observação cadastrada.'}
+              </p>
             </div>
           </div>
         </div>

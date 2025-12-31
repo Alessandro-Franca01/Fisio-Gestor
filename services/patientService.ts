@@ -11,6 +11,8 @@ export interface Patient {
   age?: number;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  gender?: string;
+  occupation?: string;
   status?: string;
   notes?: string;
   addresses?: any[];

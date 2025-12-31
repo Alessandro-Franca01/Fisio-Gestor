@@ -73,6 +73,7 @@ export const PatientCreate: React.FC = () => {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [phoneMask, setPhoneMask] = useState('(99) 99999-9999');
+  const [notes, setNotes] = useState('');
   const [emergencyName, setEmergencyName] = useState('');
   const [emergencyPhone, setEmergencyPhone] = useState('');
   const [cep, setCep] = useState('');
@@ -111,7 +112,8 @@ export const PatientCreate: React.FC = () => {
       birth_date: formattedBirthDate, // CORREÇÃO: Usar a variável correta
       emergency_contact_name: emergencyName || null,
       emergency_contact_phone: emergencyPhone || null,
-      notes: occupation || null,
+      occupation: occupation || null,
+      notes: notes || null,
       gender: gender || null, // CORREÇÃO: Adicionar gênero ao payload
     };
 
@@ -455,6 +457,28 @@ export const PatientCreate: React.FC = () => {
           </div>
         </section>
 
+        {/* Observations */}
+        <section className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
+          <div className="flex items-center gap-3 mb-6 border-b border-border-light dark:border-border-dark pb-4">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Icon name="description" />
+            </div>
+            <h2 className="text-xl font-bold text-text-light dark:text-text-dark">Observações</h2>
+          </div>
+          <div className="grid grid-cols-1 gap-6">
+            <label className="flex flex-col">
+              <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Notas / Observações Gerais</p>
+              <textarea
+                value={notes}
+                onChange={e => setNotes(e.target.value)}
+                rows={4}
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark p-4 text-base transition-all placeholder:text-subtle-light dark:placeholder:text-subtle-dark"
+                placeholder="Ex: Alergias, preferências de horário, histórico relevante..."
+              />
+            </label>
+          </div>
+        </section>
+
         <div className="flex justify-end gap-4 pt-6 pb-8 border-t border-border-light dark:border-border-dark">
           <button
             onClick={() => navigate(-1)}
@@ -472,7 +496,7 @@ export const PatientCreate: React.FC = () => {
             {isSubmitting ? 'Salvando...' : 'Salvar Paciente'}
           </button>
         </div>
-      </div>
-    </div>
+      </div >
+    </div >
   );
 };
