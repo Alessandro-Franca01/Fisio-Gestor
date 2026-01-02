@@ -61,6 +61,7 @@ export default function App() {
           <Route path="/patients" element={<PatientList />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
           <Route path="/patients/new" element={<PatientCreate />} />
+          <Route path="/patients/:id/edit" element={<PatientCreate />} />
 
           <Route path="/agenda" element={<Agenda />} />
 

@@ -1,9 +1,7 @@
-import React, { useState, ChangeEvent, useRef, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import { createPatient } from '../services/patientService';
-
-// Custom InputMask component
+import patientService, { createPatient, updatePatient, getPatientById } from '../services/patientService';
 const InputMask = ({
   mask,
   value,
@@ -63,6 +61,8 @@ const InputMask = ({
 
 export const PatientCreate: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const isEdit = Boolean(id);
   const [name, setName] = useState('');
   const [cpf, setCpf] = useState('');
   const [rg, setRg] = useState('');
@@ -85,6 +85,49 @@ export const PatientCreate: React.FC = () => {
   const [complement, setComplement] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (id) {
+      fetchPatient(id);
+    }
+  }, [id]);
+
+  const fetchPatient = async (patientId: string) => {
+    try {
+      const p = await getPatientById(patientId);
+      setName(p.name || '');
+      setCpf(p.cpf || '');
+      setRg(p.rg || '');
+      setAge(p.age?.toString() || '');
+      setBirthDate(p.birth_date || '');
+      setOccupation(p.occupation || '');
+      setGender(p.gender || '');
+      setEmail(p.email || '');
+      setPhone(p.phone || '');
+      setNotes(p.notes || '');
+      setEmergencyName(p.emergency_contact_name || '');
+      setEmergencyPhone(p.emergency_contact_phone || '');
+
+      if (p.addresses && p.addresses.length > 0) {
+        const addr = p.addresses[0];
+        setCep(addr.cep || '');
+        setCity(addr.city || '');
+        setState(addr.state || '');
+        setStreet(addr.street || '');
+        setNumber(addr.number || '');
+        setNeighborhood(addr.neighborhood || '');
+        setComplement(addr.complement || '');
+      }
+
+      // Adjust phone mask
+      if (p.phone && p.phone.replace(/\D/g, '').length <= 10) {
+        setPhoneMask('(99) 9999-9999');
+      }
+    } catch (err) {
+      console.error('Error fetching patient:', err);
+      setError('Erro ao carregar dados do paciente.');
+    }
+  };
 
   const handleSubmit = async () => {
     setError(null);
@@ -133,12 +176,22 @@ export const PatientCreate: React.FC = () => {
 
     try {
       setIsSubmitting(true);
-      console.log('Creating patient with payload:', payload);
-      const response = await createPatient(payload);
-      console.log('Patient created successfully:', response);
+      let response;
+
+      if (isEdit && id) {
+        console.log('Updating patient with payload:', payload);
+        response = await updatePatient(id, payload);
+        console.log('Patient updated successfully:', response);
+        alert('Paciente atualizado com sucesso!');
+      } else {
+        console.log('Creating patient with payload:', payload);
+        response = await createPatient(payload);
+        console.log('Patient created successfully:', response);
+        alert('Paciente cadastrado com sucesso!');
+      }
 
       // Extract the patient ID from the response
-      const patientId = response?.id || response?.data?.id;
+      const patientId = response?.id || response?.data?.id || id;
 
       if (patientId) {
         // Show success message and redirect
@@ -205,8 +258,12 @@ export const PatientCreate: React.FC = () => {
     <div className="max-w-4xl mx-auto p-4">
       <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Novo Paciente</h1>
-          <p className="text-subtle-light dark:text-subtle-dark mt-1">Preencha as informações para cadastrar um novo paciente.</p>
+          <h1 className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">
+            {isEdit ? 'Editar Paciente' : 'Novo Paciente'}
+          </h1>
+          <p className="text-subtle-light dark:text-subtle-dark mt-1">
+            {isEdit ? 'Atualize as informações do paciente.' : 'Preencha as informações para cadastrar um novo paciente.'}
+          </p>
         </div>
         <div className="flex gap-3">
           <button onClick={() => navigate(-1)} className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/10 transition-colors border border-transparent hover:border-border-light dark:hover:border-border-dark">
@@ -217,8 +274,8 @@ export const PatientCreate: React.FC = () => {
             disabled={isSubmitting}
             className={`flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em] hover:opacity-90 transition-colors shadow-sm ${isSubmitting ? 'opacity-70 cursor-not-allowed' : ''}`}
           >
-            <Icon name="check_circle" className="mr-2" />
-            <span className="truncate">{isSubmitting ? 'Salvando...' : 'Salvar Cadastro'}</span>
+            <Icon name="check_circle" />
+            <span className="truncate">{isSubmitting ? 'Salvando...' : (isEdit ? 'Salvar Alterações' : 'Salvar Cadastro')}</span>
           </button>
         </div>
       </header>
@@ -228,7 +285,9 @@ export const PatientCreate: React.FC = () => {
           <div className="flex items-start gap-3">
             <Icon name="error" className="text-red-600 dark:text-red-400 mt-0.5" />
             <div>
-              <p className="text-red-800 dark:text-red-300 font-medium">Erro ao cadastrar paciente</p>
+              <p className="text-red-800 dark:text-red-300 font-medium">
+                {isEdit ? 'Erro ao atualizar paciente' : 'Erro ao cadastrar paciente'}
+              </p>
               <p className="text-red-700 dark:text-red-400 text-sm mt-1 whitespace-pre-line">{error}</p>
             </div>
           </div>
@@ -493,7 +552,7 @@ export const PatientCreate: React.FC = () => {
             className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-colors shadow-lg shadow-primary/20 disabled:opacity-70 disabled:cursor-not-allowed"
             type="button"
           >
-            {isSubmitting ? 'Salvando...' : 'Salvar Paciente'}
+            {isSubmitting ? 'Salvando...' : (isEdit ? 'Salvar Alterações' : 'Salvar Paciente')}
           </button>
         </div>
       </div >
