@@ -85,6 +85,7 @@ export const PatientCreate: React.FC = () => {
   const [complement, setComplement] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   useEffect(() => {
     if (id) {
@@ -131,14 +132,14 @@ export const PatientCreate: React.FC = () => {
 
   const handleSubmit = async () => {
     setError(null);
+    setSuccessMessage(null);
     if (!name.trim()) return setError('Nome é obrigatório');
     if (!phone.trim()) return setError('Telefone é obrigatório');
 
-    // Formatar data de nascimento para o padrão YYYY-MM-DD
+    // ... existing payload logic ...
     let formattedBirthDate = null;
     if (birthDate) {
       formattedBirthDate = birthDate;
-      // Se já não estiver no formato correto, converter
       if (birthDate.includes('/')) {
         const [day, month, year] = birthDate.split('/');
         formattedBirthDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
@@ -152,15 +153,14 @@ export const PatientCreate: React.FC = () => {
       cpf: cpf || null,
       rg: rg || null,
       age: age || null,
-      birth_date: formattedBirthDate, // CORREÇÃO: Usar a variável correta
+      birth_date: formattedBirthDate,
       emergency_contact_name: emergencyName || null,
       emergency_contact_phone: emergencyPhone || null,
       occupation: occupation || null,
       notes: notes || null,
-      gender: gender || null, // CORREÇÃO: Adicionar gênero ao payload
+      gender: gender || null,
     };
 
-    // Only include addresses if at least one field is filled
     const hasAddress = cep || city || state || street || number || neighborhood || complement;
     if (hasAddress) {
       payload.addresses = [{
@@ -182,24 +182,25 @@ export const PatientCreate: React.FC = () => {
         console.log('Updating patient with payload:', payload);
         response = await updatePatient(id, payload);
         console.log('Patient updated successfully:', response);
-        alert('Paciente atualizado com sucesso!');
+        setSuccessMessage('Paciente atualizado com sucesso!');
       } else {
         console.log('Creating patient with payload:', payload);
         response = await createPatient(payload);
         console.log('Patient created successfully:', response);
-        alert('Paciente cadastrado com sucesso!');
+        setSuccessMessage('Paciente cadastrado com sucesso!');
       }
 
-      // Extract the patient ID from the response
       const patientId = response?.id || response?.data?.id || id;
 
       if (patientId) {
-        // Show success message and redirect
-        alert('Paciente cadastrado com sucesso!');
-        navigate(`/patients/${patientId}`);
+        // Wait a bit to show the success message before redirecting
+        setTimeout(() => {
+          navigate(`/patients/${patientId}`);
+        }, 1500);
       } else {
         console.error('No patient ID in response:', response);
         setError('Erro ao obter ID do paciente. Tente novamente.');
+        setSuccessMessage(null);
       }
     } catch (err: any) {
       console.error('Failed to create patient:', err);
@@ -281,7 +282,7 @@ export const PatientCreate: React.FC = () => {
       </header>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-start gap-3">
             <Icon name="error" className="text-red-600 dark:text-red-400 mt-0.5" />
             <div>
@@ -289,6 +290,20 @@ export const PatientCreate: React.FC = () => {
                 {isEdit ? 'Erro ao atualizar paciente' : 'Erro ao cadastrar paciente'}
               </p>
               <p className="text-red-700 dark:text-red-400 text-sm mt-1 whitespace-pre-line">{error}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg animate-in fade-in slide-in-from-top-4 duration-300">
+          <div className="flex items-start gap-3">
+            <div className="p-1 bg-green-500 rounded-full">
+              <Icon name="check" className="text-white text-xs" />
+            </div>
+            <div>
+              <p className="text-green-800 dark:text-green-300 font-medium">{successMessage}</p>
+              <p className="text-green-700 dark:text-green-400 text-sm mt-0.5">Redirecionando...</p>
             </div>
           </div>
         </div>

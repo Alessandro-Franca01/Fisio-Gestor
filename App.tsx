@@ -16,6 +16,7 @@ import { SessionList } from './pages/SessionList';
 import { SessionDetail } from './pages/SessionDetail';
 
 import { Icon } from './components/Icon';
+import { Settings } from './pages/Settings';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/sessions/:id/edit" element={<SessionCreate />} />
 
           <Route path="/finance" element={<Finance />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>
