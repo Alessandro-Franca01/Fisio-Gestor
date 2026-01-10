@@ -6,10 +6,13 @@ export interface Patient {
   email?: string;
   phone?: string;
   cpf?: string;
+  rg?: string;
   birth_date?: string;
   age?: number;
   emergency_contact_name?: string;
   emergency_contact_phone?: string;
+  gender?: string;
+  occupation?: string;
   status?: string;
   notes?: string;
   addresses?: any[];
@@ -42,10 +45,18 @@ export const getPatientById = async (id: string | number): Promise<Patient> => {
 
 export const createPatient = async (payload: Partial<Patient> & { addresses?: any[] }) => {
   try {
+    console.log('Sending patient creation request with payload:', JSON.stringify(payload, null, 2));
     const response = await api.post('/patients', payload);
+    console.log('Patient created successfully:', response.data);
     return response.data?.data ?? response.data;
-  } catch (error) {
-    console.error('Error creating patient:', error);
+  } catch (error: any) {
+    console.error('Error creating patient:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      headers: error.response?.headers,
+      request: error.request
+    });
     throw error;
   }
 };

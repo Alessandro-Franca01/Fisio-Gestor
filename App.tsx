@@ -16,6 +16,7 @@ import { SessionList } from './pages/SessionList';
 import { SessionDetail } from './pages/SessionDetail';
 
 import { Icon } from './components/Icon';
+import { Settings } from './pages/Settings';
 
 const Layout: React.FC = () => {
   const navigate = useNavigate();
@@ -61,6 +62,7 @@ export default function App() {
           <Route path="/patients" element={<PatientList />} />
           <Route path="/patients/:id" element={<PatientDetail />} />
           <Route path="/patients/new" element={<PatientCreate />} />
+          <Route path="/patients/:id/edit" element={<PatientCreate />} />
 
           <Route path="/agenda" element={<Agenda />} />
 
@@ -74,6 +76,7 @@ export default function App() {
           <Route path="/sessions/:id/edit" element={<SessionCreate />} />
 
           <Route path="/finance" element={<Finance />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

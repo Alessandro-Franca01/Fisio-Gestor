@@ -80,18 +80,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
         </div>
 
         <div className="flex flex-col gap-1">
-          <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-light dark:text-text-dark hover:bg-primary/10 transition-colors">
-            <Icon name="settings" />
+          <Link to="/settings" className={navItemClass('/settings')}>
+            <Icon name="settings" filled={isActive('/settings')} />
             <p className="text-sm font-medium leading-normal">Configurações</p>
-          </button>
-
+          </Link>
           <div className="border-t border-border-light dark:border-border-dark my-2"></div>
 
           <div className="flex items-center gap-3 p-2 cursor-pointer hover:bg-primary/5 rounded-lg" onClick={handleLogout}>
-            <div
-              className="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10"
-              style={{ backgroundImage: 'url("https://lh3.googleusercontent.com/aida-public/AB6AXuC5AZbSrlSGMK-_WSpDWBRT1Q_MiSGH9YO8xWvVupGoWzjxi0aQCR8DhRaT7kY9pQFl7PNdi93AiUUQwCySQuV-48qBnEqy31MwMh0t0ifFRX_Q_Nl0vzNTJ8Qyy1zSdYnJ1l6TbqQme7RafgJ6Tne2gQN8l28x7BhPqoHPzCNFUqGFzPaLP4E27AwSvr-fwE43kJXp9AZDIUIul5S6FB-YFKSpL4oPQ_ef8c89vkRGUWW5JHdCdUCVYmR8lWT6Levwmckq_Onj3y0")' }}
-            ></div>
+            <div className="size-10 rounded-full bg-surface-light dark:bg-surface-dark border-4 border-primary/20 flex items-center justify-center text-subtle-light dark:text-subtle-dark">
+              <Icon name="person" className="text-2xl" />
+            </div>
             <div className="flex flex-col overflow-hidden">
               <h1 className="text-text-light dark:text-text-dark text-sm font-medium leading-normal truncate">Dr. Carlos Silva</h1>
               <p className="text-subtle-light dark:text-subtle-dark text-xs font-normal leading-normal truncate">Fisioterapeuta</p>
