@@ -193,4 +193,10 @@ export type IconName =
   | 'filter_list'
   | 'lock'
   | 'domain'
-  | 'person';
+  | 'person'
+  | 'account_circle'
+  | 'security'
+  | 'notifications'
+  | 'palette'
+  | 'translate'
+  | 'business';

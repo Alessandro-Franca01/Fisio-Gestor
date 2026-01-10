@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { HashRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
 import { Sidebar } from './components/Sidebar';
@@ -14,6 +15,7 @@ import { SessionDetail } from './pages/SessionDetail';
 import { SessionEdit } from './pages/SessionEdit';
 import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
+import { Settings } from './pages/Settings';
 
 const Layout: React.FC = () => {
   return (
@@ -50,6 +52,7 @@ export default function App() {
           <Route path="/sessions/:id/edit" element={<SessionEdit />} />
           
           <Route path="/finance" element={<Finance />} />
+          <Route path="/settings" element={<Settings />} />
         </Route>
       </Routes>
     </Router>

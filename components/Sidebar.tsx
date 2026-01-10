@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from './Icon';
@@ -54,10 +55,10 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col gap-1">
-        <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-text-light dark:text-text-dark hover:bg-primary/10 transition-colors">
-          <Icon name="settings" />
+        <Link to="/settings" className={navItemClass('/settings')}>
+          <Icon name="settings" filled={isActive('/settings')} />
           <p className="text-sm font-medium leading-normal">Configurações</p>
-        </button>
+        </Link>
         
         <div className="border-t border-border-light dark:border-border-dark my-2"></div>
 
