@@ -176,11 +176,12 @@ export const AppointmentCreate: React.FC = () => {
               <label className="flex flex-col">
                 <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Valor do Repasse (R$)</p>
                 <input
-                  value={healthPlanId}
-                  onChange={(e) => setHealthPlanId(e.target.value)}
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                  value={healthPlanId ? healthPlans.find(p => p.id === Number(healthPlanId))?.value?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
+                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-subtle-light dark:text-subtle-dark border border-border-light dark:border-border-dark bg-background-light/50 dark:bg-background-dark/50 h-14 px-4 text-base font-medium cursor-not-allowed"
                   placeholder="R$ 0,00"
                   type="text"
+                  readOnly
+                  disabled
                 />
               </label>
             </div>
