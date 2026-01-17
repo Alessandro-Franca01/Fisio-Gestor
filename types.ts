@@ -129,6 +129,10 @@ export interface Appointment {
   category: AppointmentCategory;
   slotIndex?: number; // 0-3 para atendimentos em clínica
   
+  // Plano de Saúde (apenas para clínica)
+  healthInsuranceName?: string;
+  healthInsuranceValue?: number;
+  
   type: string; // ex: "Fisioterapia", "Pilates", "Avaliação"
   location?: string;
   
@@ -199,4 +203,5 @@ export type IconName =
   | 'notifications'
   | 'palette'
   | 'translate'
-  | 'business';
+  | 'business'
+  | 'health_and_safety';

@@ -70,6 +70,42 @@ export const AppointmentCreate: React.FC = () => {
           </div>
         </section>
 
+        {/* Health Insurance Info - Visible only for Clinic */}
+        {category === AppointmentCategory.CLINIC && (
+          <section className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 mb-4">
+               <Icon name="health_and_safety" className="text-primary" />
+               <h2 className="text-xl font-bold text-text-light dark:text-text-dark">Plano de Saúde / Convênio</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <label className="flex flex-col">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Nome do Convênio</p>
+                <select 
+                  className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                >
+                  <option value="">Selecione o plano</option>
+                  <option value="unimed">Unimed</option>
+                  <option value="bradesco">Bradesco Saúde</option>
+                  <option value="amil">Amil</option>
+                  <option value="sulamerica">SulAmérica</option>
+                  <option value="notredame">NotreDame Intermédica</option>
+                  <option value="porto">Porto Seguro Saúde</option>
+                  <option value="golden">Golden Cross</option>
+                  <option value="outros">Outros</option>
+                </select>
+              </label>
+              <label className="flex flex-col">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Valor do Repasse (R$)</p>
+                <input 
+                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" 
+                  placeholder="R$ 0,00" 
+                  type="text"
+                />
+              </label>
+            </div>
+          </section>
+        )}
+
         {/* Details */}
         <section className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
           <h2 className="text-xl font-bold text-text-light dark:text-text-dark mb-4">Data e Horário</h2>
@@ -103,7 +139,7 @@ export const AppointmentCreate: React.FC = () => {
         </section>
 
         <div className="flex justify-end gap-4 pt-4 pb-12">
-          <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
+          <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/10 transition-colors" type="button">Cancelar</button>
           <button onClick={() => navigate('/agenda')} className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-all shadow-lg shadow-primary/20" type="submit">Confirmar Agendamento</button>
         </div>
       </div>
