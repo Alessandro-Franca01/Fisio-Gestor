@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { createAppointment } from '../services/appointmentService';
 import { getHealthPlans, HealthPlan } from '../services/healthPlanService';
+import { getPatients, Patient } from '../services/patientService';
 import { AppointmentCategory } from '../types';
 
 export const AppointmentCreate: React.FC = () => {
@@ -20,6 +21,29 @@ export const AppointmentCreate: React.FC = () => {
   const [room, setRoom] = useState('');
   const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([]);
   const [healthPlanId, setHealthPlanId] = useState('');
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+
+  useEffect(() => {
+    const fetchPatients = async () => {
+      try {
+        const data = await getPatients();
+        setPatients(data);
+      } catch (error) {
+        console.error('Failed to fetch patients', error);
+      }
+    };
+    fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    if (patientId) {
+      const patient = patients.find(p => p.id === Number(patientId));
+      setSelectedPatient(patient || null);
+    } else {
+      setSelectedPatient(null);
+    }
+  }, [patientId, patients]);
 
   useEffect(() => {
     const fetchHealthPlans = async () => {
@@ -135,15 +159,22 @@ export const AppointmentCreate: React.FC = () => {
                 <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Buscar Paciente</p>
                 <select value={patientId} onChange={e => setPatientId(e.target.value ? Number(e.target.value) : '')} className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base">
                   <option value="">Busque e selecione um paciente</option>
-                  <option value="1">Ana Clara Souza</option>
-                  <option value="2">Bruno Medeiros</option>
+                  {patients.map(p => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
                 </select>
               </label>
             </div>
             <div className="md:col-span-1 flex items-center justify-between gap-4 rounded-lg p-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
               <div className="flex flex-col gap-2 flex-1">
-                <h3 className="text-text-light dark:text-text-dark text-base font-bold leading-tight">Informações do Paciente</h3>
-                <p className="text-subtle-light dark:text-subtle-dark text-sm font-normal leading-normal">Selecione um paciente para ver os detalhes do endereço e contato.</p>
+                <h3 className="text-text-light dark:text-text-dark text-base font-bold leading-tight">
+                  {selectedPatient ? selectedPatient.name : 'Informações do Paciente'}
+                </h3>
+                <p className="text-subtle-light dark:text-subtle-dark text-sm font-normal leading-normal">
+                  {selectedPatient
+                    ? `CPF: ${selectedPatient.cpf || 'Não informado'} | Tel: ${selectedPatient.phone || 'Não informado'}`
+                    : 'Selecione um paciente para ver os detalhes do endereço e contato.'}
+                </p>
               </div>
               <div className="flex items-center justify-center size-16 bg-primary/20 rounded-lg text-primary">
                 <Icon name="person_search" className="text-4xl" />
@@ -237,7 +268,13 @@ export const AppointmentCreate: React.FC = () => {
           <div className="text-left text-sm text-red-600">{error}</div>
           <div className="flex justify-end gap-4">
             <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
-            <button disabled={isSubmitting} className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-colors disabled:opacity-60" type="submit">{isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}</button>
+            <button
+              disabled={isSubmitting}
+              className="px-8 py-3 rounded-lg text-base font-bold text-background-dark bg-primary hover:bg-opacity-90 transition-colors disabled:opacity-60"
+              type="submit"
+            >
+              {isSubmitting ? 'Salvando...' : 'Salvar Agendamento'}
+            </button>
           </div>
         </div>
       </div>
