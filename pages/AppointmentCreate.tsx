@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { createAppointment } from '../services/appointmentService';
+import { getHealthPlans, HealthPlan } from '../services/healthPlanService';
 import { AppointmentCategory } from '../types';
 
 export const AppointmentCreate: React.FC = () => {
@@ -17,6 +18,20 @@ export const AppointmentCreate: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [category, setCategory] = useState<AppointmentCategory>(AppointmentCategory.PRIVATE);
   const [room, setRoom] = useState('');
+  const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([]);
+  const [healthPlanId, setHealthPlanId] = useState('');
+
+  useEffect(() => {
+    const fetchHealthPlans = async () => {
+      try {
+        const plans = await getHealthPlans();
+        setHealthPlans(plans);
+      } catch (error) {
+        console.error('Failed to fetch health plans', error);
+      }
+    };
+    fetchHealthPlans();
+  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -50,6 +65,7 @@ export const AppointmentCreate: React.FC = () => {
         observations: observations || null,
         room: room,
         category: category,
+        health_plan_id: category === AppointmentCategory.CLINIC ? (healthPlanId ? Number(healthPlanId) : null) : null,
       } as any;
 
       const created = await createAppointment(payload);
@@ -135,6 +151,41 @@ export const AppointmentCreate: React.FC = () => {
             </div>
           </div>
         </section>
+
+        {/* Health Insurance Info - Visible only for Clinic */}
+        {category === AppointmentCategory.CLINIC && (
+          <section className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm animate-in fade-in slide-in-from-top-2">
+            <div className="flex items-center gap-2 mb-4">
+              <Icon name="health_and_safety" className="text-primary" />
+              <h2 className="text-xl font-bold text-text-light dark:text-text-dark">Plano de Saúde / Convênio</h2>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <label className="flex flex-col">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Nome do Convênio</p>
+                <select
+                  value={healthPlanId}
+                  onChange={(e) => setHealthPlanId(e.target.value)}
+                  className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                >
+                  <option value="">Selecione o plano</option>
+                  {healthPlans.map(plan => (
+                    <option key={plan.id} value={plan.id}>{plan.name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-col">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Valor do Repasse (R$)</p>
+                <input
+                  value={healthPlanId}
+                  onChange={(e) => setHealthPlanId(e.target.value)}
+                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                  placeholder="R$ 0,00"
+                  type="text"
+                />
+              </label>
+            </div>
+          </section>
+        )}
 
         {/* Details */}
         <section className="bg-surface-light dark:bg-surface-dark p-6 rounded-xl border border-border-light dark:border-border-dark shadow-sm">
