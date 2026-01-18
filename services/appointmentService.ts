@@ -11,6 +11,9 @@ export interface Appointment {
   type: string;
   status: string;
   color: string;
+  category: 'private' | 'clinic';
+  room?: string;
+  slot?: number; // For visualization
 }
 
 export const getAppointments = async (startDate: Date, endDate: Date): Promise<Appointment[]> => {
@@ -76,7 +79,10 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
         scheduled_time: time,
         type: appt.type || 'Fisioterapia',
         status: appt.status || 'Pendente',
-        color: getAppointmentColor(appt.type || 'Fisioterapia')
+        color: getAppointmentColor(appt.type || 'Fisioterapia'),
+        category: (appt.category as 'private' | 'clinic') || 'private',
+        room: appt.room,
+        slot: 0,
       };
     });
 
@@ -207,7 +213,8 @@ export const getAppointmentsByPatient = async (patientId: number | string, param
       scheduled_time: appt.scheduled_time,
       type: appt.type,
       status: appt.status,
-      color: getAppointmentColor(appt.type)
+      color: getAppointmentColor(appt.type),
+      category: (appt.category as 'private' | 'clinic') || 'private'
     }));
   } catch (error) {
     console.error('Error fetching patient appointments:', error);

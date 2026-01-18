@@ -73,3 +73,15 @@ export interface DashboardData {
   upcoming_appointments: any[]; // We will map this to Appointment in the component
   pending_appointments: any[];
 }
+
+export enum AppointmentCategory {
+  PRIVATE = 'private',
+  CLINIC = 'clinic'
+}
+
+export interface HealthPlan {
+  id: string;
+  name: string;
+  value: string;
+  status: string;
+}

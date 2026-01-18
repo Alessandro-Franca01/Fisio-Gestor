@@ -39,6 +39,7 @@ export const Settings: React.FC = () => {
                     {[
                         { id: 'profile', label: 'Meu Perfil', icon: 'account_circle' },
                         { id: 'security', label: 'Segurança', icon: 'security' },
+                        { id: 'clinic', label: 'Dados da Clínica', icon: 'business' },
                         { id: 'app', label: 'Preferências do App', icon: 'palette' },
                     ].map((tab) => (
                         <button
@@ -125,6 +126,35 @@ export const Settings: React.FC = () => {
                             </section>
                         </div>
                     )}
+
+                    {activeTab === 'clinic' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6">
+                            <section className="bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6 shadow-sm">
+                                <h3 className="text-lg font-bold text-text-light dark:text-text-dark mb-6 flex items-center gap-2">
+                                    <Icon name="business" /> Dados da Clínica Principal
+                                </h3>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <label className="flex flex-col gap-1 md:col-span-2">
+                                        <span className="text-xs font-bold text-subtle-light dark:text-subtle-dark uppercase">Nome da Clínica / Consultório</span>
+                                        <input className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-11" defaultValue="FisioVida Central" />
+                                    </label>
+                                    <label className="flex flex-col gap-1">
+                                        <span className="text-xs font-bold text-subtle-light dark:text-subtle-dark uppercase">CNPJ (Opcional)</span>
+                                        <input className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-11" placeholder="00.000.000/0001-00" />
+                                    </label>
+                                    <label className="flex flex-col gap-1">
+                                        <span className="text-xs font-bold text-subtle-light dark:text-subtle-dark uppercase">Telefone de Contato</span>
+                                        <input className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-11" defaultValue="(11) 3456-7890" />
+                                    </label>
+                                    <label className="flex flex-col gap-1 md:col-span-2">
+                                        <span className="text-xs font-bold text-subtle-light dark:text-subtle-dark uppercase">Endereço Completo</span>
+                                        <input className="form-input rounded-lg border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-11" defaultValue="Av. Paulista, 1000 - São Paulo, SP" />
+                                    </label>
+                                </div>
+                            </section>
+                        </div>
+                    )}
+
 
                     {activeTab === 'app' && (
                         <div className="animate-in fade-in slide-in-from-bottom-2 space-y-6">
