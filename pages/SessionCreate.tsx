@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { hours } from './Agenda';
 import sessionService from '../services/sessionService';
@@ -17,6 +17,9 @@ const DAYS_OF_WEEK = [
 
 export const SessionCreate: React.FC = () => {
   const navigate = useNavigate();
+  const { id } = useParams();
+  const isEditing = !!id;
+
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
 
@@ -41,6 +44,35 @@ export const SessionCreate: React.FC = () => {
     };
     fetchPatients();
   }, []);
+
+  useEffect(() => {
+    if (isEditing) {
+      const fetchSession = async () => {
+        try {
+          const session = await sessionService.getSessionById(id);
+          setFormData({
+            patient_id: session.patient_id.toString(),
+            title: session.title || '',
+            total_appointments: session.total_appointments.toString(),
+            total_value: session.total_value.toString(),
+            start_date: session.start_date.split('T')[0],
+            observations: session.observations || '',
+            schedules: session.schedules && session.schedules.length > 0
+              ? session.schedules.map(s => ({
+                day_of_week: s.day_of_week,
+                time: s.time.substring(0, 5) // HH:mm
+              }))
+              : [{ day_of_week: 'Segunda-feira', time: '09:00' }]
+          });
+        } catch (error) {
+          console.error('Failed to fetch session', error);
+          alert('Erro ao carregar os dados da sessão.');
+          navigate('/sessions');
+        }
+      };
+      fetchSession();
+    }
+  }, [isEditing, id, navigate]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -126,18 +158,25 @@ export const SessionCreate: React.FC = () => {
 
     setLoading(true);
     try {
-      const generatedAppointments = generateAppointments();
-
-      await sessionService.createSession({
-        ...formData,
-        total_appointments: parseInt(formData.total_appointments),
-        total_value: parseFloat(formData.total_value.replace(',', '.')),
-        appointments: generatedAppointments
-      });
+      if (isEditing) {
+        await sessionService.updateSession(id!, {
+          ...formData,
+          total_appointments: parseInt(formData.total_appointments),
+          total_value: parseFloat(formData.total_value.replace(',', '.'))
+        });
+      } else {
+        const generatedAppointments = generateAppointments();
+        await sessionService.createSession({
+          ...formData,
+          total_appointments: parseInt(formData.total_appointments),
+          total_value: parseFloat(formData.total_value.replace(',', '.')),
+          appointments: generatedAppointments
+        });
+      }
       navigate('/sessions');
     } catch (error) {
-      console.error('Failed to create session', error);
-      alert('Erro ao criar sessão. Verifique os dados e tente novamente.');
+      console.error('Failed to save session', error);
+      alert('Erro ao salvar sessão. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
     }
@@ -147,7 +186,9 @@ export const SessionCreate: React.FC = () => {
     <div className="mx-auto max-w-4xl">
       <form onSubmit={handleSubmit}>
         <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-          <p className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Cadastro de Sessão</p>
+          <p className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">
+            {isEditing ? 'Editar Sessão' : 'Cadastro de Sessão'}
+          </p>
           <button
             type="submit"
             disabled={loading}
@@ -167,13 +208,15 @@ export const SessionCreate: React.FC = () => {
                   value={formData.patient_id}
                   onChange={handleChange}
                   required
-                  className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                  disabled={isEditing}
+                  className={`form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Selecione um paciente</option>
                   {patients.map(patient => (
                     <option key={patient.id} value={patient.id}>{patient.name}</option>
                   ))}
                 </select>
+                {isEditing && <p className="text-xs text-subtle-light dark:text-subtle-dark mt-1">O paciente não pode ser alterado após a criação.</p>}
               </label>
             </div>
 

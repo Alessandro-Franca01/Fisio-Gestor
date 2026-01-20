@@ -152,6 +152,16 @@ export const getAppointmentById = async (id: string): Promise<any> => {
   }
 };
 
+export const updateAppointment = async (id: string | number, payload: any) => {
+  try {
+    const response = await api.put(`/appointments/${id}`, payload);
+    return response.data?.data ?? response.data;
+  } catch (error) {
+    console.error('Error updating appointment:', error);
+    throw error;
+  }
+};
+
 export const updateAppointmentStatus = async (
   id: string,
   status: 'Confirmado' | 'Cancelado' | 'Pendente'
