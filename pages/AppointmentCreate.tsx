@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Icon } from '../components/Icon';
+import { hours } from './Agenda';
 import { createAppointment } from '../services/appointmentService';
 import { getHealthPlans, HealthPlan } from '../services/healthPlanService';
 import { getPatients, Patient } from '../services/patientService';
@@ -230,7 +231,16 @@ export const AppointmentCreate: React.FC = () => {
 
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Hora</p>
-              <input value={time} onChange={e => setTime(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="time" />
+              <select
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+              >
+                <option value="">Selecione o horário</option>
+                {hours.map(hour => (
+                  <option key={hour} value={hour}>{hour}</option>
+                ))}
+              </select>
             </label>
 
             {category === AppointmentCategory.CLINIC && (
@@ -265,8 +275,13 @@ export const AppointmentCreate: React.FC = () => {
         </section>
 
         <div className="flex justify-between items-center gap-4 pt-4">
-          <div className="text-left text-sm text-red-600">{error}</div>
-          <div className="flex justify-end gap-4">
+          {error && (
+            <div className="flex-1 text-left p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+              <Icon name="error" />
+              <span>{error}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-4 ml-auto">
             <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
             <button
               disabled={isSubmitting}
