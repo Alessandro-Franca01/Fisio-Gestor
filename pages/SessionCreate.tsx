@@ -4,6 +4,8 @@ import { Icon } from '../components/Icon';
 import { hours } from './Agenda';
 import sessionService from '../services/sessionService';
 import patientService, { Patient } from '../services/patientService';
+import { getHealthPlans, HealthPlan } from '../services/healthPlanService';
+import { AppointmentCategory } from '../types';
 
 const DAYS_OF_WEEK = [
   'Segunda-feira',
@@ -22,15 +24,30 @@ export const SessionCreate: React.FC = () => {
 
   const [loading, setLoading] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
+  const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([]);
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    patient_id: string;
+    title: string;
+    total_appointments: string;
+    total_value: string;
+    start_date: string;
+    observations: string;
+    schedules: { day_of_week: string; time: string }[];
+    category: AppointmentCategory;
+    room: string;
+    health_plan_id: string;
+  }>({
     patient_id: '',
     title: '',
     total_appointments: '',
     total_value: '',
     start_date: new Date().toISOString().split('T')[0],
     observations: '',
-    schedules: [{ day_of_week: 'Segunda-feira', time: '09:00' }]
+    schedules: [{ day_of_week: 'Segunda-feira', time: '09:00' }],
+    category: AppointmentCategory.PRIVATE,
+    room: '',
+    health_plan_id: '',
   });
 
   useEffect(() => {
@@ -43,6 +60,18 @@ export const SessionCreate: React.FC = () => {
       }
     };
     fetchPatients();
+  }, []);
+
+  useEffect(() => {
+    const fetchHealthPlans = async () => {
+      try {
+        const plans = await getHealthPlans();
+        setHealthPlans(plans);
+      } catch (error) {
+        console.error('Failed to fetch health plans', error);
+      }
+    };
+    fetchHealthPlans();
   }, []);
 
   useEffect(() => {
@@ -62,7 +91,10 @@ export const SessionCreate: React.FC = () => {
                 day_of_week: s.day_of_week,
                 time: s.time.substring(0, 5) // HH:mm
               }))
-              : [{ day_of_week: 'Segunda-feira', time: '09:00' }]
+              : [{ day_of_week: 'Segunda-feira', time: '09:00' }],
+            category: (session as any).category || AppointmentCategory.PRIVATE,
+            room: (session as any).room || '',
+            health_plan_id: (session as any).health_plan_id ? String((session as any).health_plan_id) : '',
           });
         } catch (error) {
           console.error('Failed to fetch session', error);
@@ -73,6 +105,12 @@ export const SessionCreate: React.FC = () => {
       fetchSession();
     }
   }, [isEditing, id, navigate]);
+
+  useEffect(() => {
+    if (formData.health_plan_id) {
+      setFormData(prev => ({ ...prev, total_value: '0' }));
+    }
+  }, [formData.health_plan_id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -134,7 +172,11 @@ export const SessionCreate: React.FC = () => {
             appointments.push({
               date: currentDate.toISOString().split('T')[0],
               time: schedule.time,
-              day_of_week: schedule.day_of_week
+              day_of_week: schedule.day_of_week,
+              category: formData.category,
+              room: formData.room,
+              health_plan_id: formData.category === AppointmentCategory.CLINIC ? (formData.health_plan_id ? Number(formData.health_plan_id) : null) : null,
+              status: 'Pendente'
             });
             count++;
           }
@@ -200,6 +242,74 @@ export const SessionCreate: React.FC = () => {
 
         <div className="rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark p-6 md:p-8">
           <div className="grid grid-cols-1 gap-x-6 gap-y-8 md:grid-cols-2">
+
+            {/* Category Toggle */}
+            <div className="md:col-span-2">
+              <h2 className="text-xl font-bold text-text-light dark:text-text-dark mb-4">Tipo de Atendimento</h2>
+              <div className="flex p-1 bg-background-light dark:bg-background-dark rounded-xl border border-border-light dark:border-border-dark w-full sm:w-fit">
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, category: AppointmentCategory.PRIVATE, health_plan_id: '' }))}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.PRIVATE ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
+                >
+                  <Icon name="person" />
+                  Atendimento Privado
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, category: AppointmentCategory.CLINIC }))}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.CLINIC ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
+                  disabled={isEditing}
+                >
+                  <Icon name="domain" />
+                  Atendimento em Clínica
+                </button>
+              </div>
+              {formData.category === AppointmentCategory.CLINIC && (
+                <p className="mt-3 text-xs text-subtle-light dark:text-subtle-dark italic">
+                  * Na clínica, você pode atender até 4 pacientes simultaneamente.
+                </p>
+              )}
+            </div>
+
+            {/* Health Plan - Visible only for Clinic */}
+            {formData.category === AppointmentCategory.CLINIC && (
+              <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-background-light/50 dark:bg-background-dark/50 rounded-lg border border-border-light dark:border-border-dark animate-in fade-in slide-in-from-top-2">
+                <div className="md:col-span-2 flex items-center gap-2">
+                  <Icon name="health_and_safety" className="text-primary" />
+                  <h3 className="text-lg font-bold text-text-light dark:text-text-dark">Plano de Saúde / Convênio</h3>
+                </div>
+                <div>
+                  <label className="flex flex-col">
+                    <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Nome do Convênio</p>
+                    <select
+                      name="health_plan_id"
+                      value={formData.health_plan_id}
+                      onChange={handleChange}
+                      className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                    >
+                      <option value="">Selecione o plano</option>
+                      {healthPlans.map(plan => (
+                        <option key={plan.id} value={plan.id}>{plan.name}</option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+                <div>
+                  <label className="flex flex-col">
+                    <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Valor do Repasse (R$)</p>
+                    <input
+                      value={formData.health_plan_id ? healthPlans.find(p => p.id === Number(formData.health_plan_id))?.value?.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
+                      className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-subtle-light dark:text-subtle-dark border border-border-light dark:border-border-dark bg-background-light/50 dark:bg-background-dark/50 h-12 px-4 text-base font-medium cursor-not-allowed"
+                      placeholder="R$ 0,00"
+                      type="text"
+                      readOnly
+                      disabled
+                    />
+                  </label>
+                </div>
+              </div>
+            )}
             <div className="md:col-span-2">
               <label className="flex flex-col">
                 <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Paciente</p>
@@ -257,8 +367,9 @@ export const SessionCreate: React.FC = () => {
                   name="total_value"
                   value={formData.total_value}
                   onChange={handleChange}
-                  required
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                  required={!formData.health_plan_id}
+                  disabled={!!formData.health_plan_id}
+                  className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${formData.health_plan_id ? 'opacity-60 cursor-not-allowed bg-background-light/50 dark:bg-background-dark/50' : ''}`}
                   placeholder="0.00"
                   type="text"
                 />
@@ -278,6 +389,26 @@ export const SessionCreate: React.FC = () => {
                 />
               </label>
             </div>
+
+            {formData.category === AppointmentCategory.CLINIC && (
+              <div className="md:col-span-2">
+                <label className="flex flex-col">
+                  <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Sala na Clínica</p>
+                  <select
+                    name="room"
+                    value={formData.room}
+                    onChange={handleChange}
+                    className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                  >
+                    <option value="no_room">Selecione uma sala</option>
+                    <option value="room1">Sala 1 (Livre)</option>
+                    <option value="room2">Sala 2 (Livre)</option>
+                    <option value="room3">Sala 3 (Ocupada)</option>
+                    <option value="room4">Sala 4 (Livre)</option>
+                  </select>
+                </label>
+              </div>
+            )}
 
             <div className="md:col-span-2">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Horários Fixos da Semana</p>
