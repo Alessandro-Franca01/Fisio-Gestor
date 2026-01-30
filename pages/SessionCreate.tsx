@@ -46,7 +46,7 @@ export const SessionCreate: React.FC = () => {
     observations: '',
     schedules: [{ day_of_week: 'Segunda-feira', time: '09:00' }],
     category: AppointmentCategory.PRIVATE,
-    room: '',
+    room: 'no_room',
     health_plan_id: '',
   });
 
@@ -108,9 +108,13 @@ export const SessionCreate: React.FC = () => {
 
   useEffect(() => {
     if (formData.health_plan_id) {
-      setFormData(prev => ({ ...prev, total_value: '0' }));
+      const plan = healthPlans.find(p => p.id === Number(formData.health_plan_id));
+      const count = parseInt(formData.total_appointments) || 0;
+      const value = plan?.value || 0;
+      const total = (count * value).toFixed(2);
+      setFormData(prev => ({ ...prev, total_value: total }));
     }
-  }, [formData.health_plan_id]);
+  }, [formData.health_plan_id, formData.total_appointments, healthPlans]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -390,7 +394,7 @@ export const SessionCreate: React.FC = () => {
               </label>
             </div>
 
-            {formData.category === AppointmentCategory.CLINIC && (
+            {/* {formData.category === AppointmentCategory.CLINIC && (
               <div className="md:col-span-2">
                 <label className="flex flex-col">
                   <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Sala na Clínica</p>
@@ -408,7 +412,7 @@ export const SessionCreate: React.FC = () => {
                   </select>
                 </label>
               </div>
-            )}
+            )} */}
 
             <div className="md:col-span-2">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Horários Fixos da Semana</p>
