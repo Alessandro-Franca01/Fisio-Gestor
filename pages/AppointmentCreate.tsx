@@ -28,6 +28,11 @@ export const AppointmentCreate: React.FC = () => {
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [status, setStatus] = useState('Pendente');
 
+  // Payment States
+  const [isPaid, setIsPaid] = useState(false);
+  const [paymentAmount, setPaymentAmount] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState('Dinheiro');
+
   useEffect(() => {
     const fetchPatients = async () => {
       try {
@@ -121,6 +126,10 @@ export const AppointmentCreate: React.FC = () => {
         category: category,
         status: status,
         health_plan_id: category === AppointmentCategory.CLINIC ? (healthPlanId ? Number(healthPlanId) : null) : null,
+        // Payment Data
+        is_paid: isPaid,
+        payment_amount: paymentAmount ? parseFloat(paymentAmount.replace('R$', '').replace('.', '').replace(',', '.')) : null,
+        payment_method: paymentMethod,
       } as any;
 
       if (isEditing) {
@@ -325,6 +334,76 @@ export const AppointmentCreate: React.FC = () => {
                 </select>
               </label>
             )}
+          </div>
+
+          {/* Payment Section - Only for new appointments or if needed (logic can vary, usually better on creation) */}
+          <div className="mt-8 border-t border-border-light dark:border-border-dark pt-6">
+            <h3 className="text-lg font-bold text-text-light dark:text-text-dark mb-4 group flex items-center gap-2">
+              <Icon name="payments" className="text-primary" />
+              Dados do Pagamento
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <label className="flex flex-col min-w-40 flex-1">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Status do Pagamento</p>
+                <div className="flex items-center gap-4 h-14 px-4 bg-background-light dark:bg-background-dark rounded-lg border border-border-light dark:border-border-dark">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="isPaid"
+                      checked={isPaid === true}
+                      onChange={() => setIsPaid(true)}
+                      className="form-radio text-primary focus:ring-primary"
+                    />
+                    <span className="text-text-light dark:text-text-dark">Pago</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="radio"
+                      name="isPaid"
+                      checked={isPaid === false}
+                      onChange={() => setIsPaid(false)}
+                      className="form-radio text-primary focus:ring-primary"
+                    />
+                    <span className="text-text-light dark:text-text-dark">Pendente</span>
+                  </label>
+                </div>
+              </label>
+
+              <label className="flex flex-col min-w-40 flex-1">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Valor (R$)</p>
+                <input
+                  value={paymentAmount}
+                  onChange={e => {
+                    // Simple currency mask logic or just let user type
+                    const value = e.target.value.replace(/\D/g, "");
+                    const formatted = new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(Number(value) / 100);
+                    setPaymentAmount(formatted);
+                  }}
+                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                  type="text"
+                  placeholder="R$ 0,00"
+                />
+              </label>
+
+              <label className="flex flex-col min-w-40 flex-1">
+                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Forma de Pagamento</p>
+                <select
+                  value={paymentMethod}
+                  onChange={e => setPaymentMethod(e.target.value)}
+                  className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                >
+                  <option value="Dinheiro">Dinheiro</option>
+                  <option value="Pix">Pix</option>
+                  <option value="Cartao">Cartão</option>
+                  <option value="Debito">Débito</option>
+                  <option value="Gratuito">Gratuito</option>
+                </select>
+              </label>
+            </div>
           </div>
 
           <div className="mt-6">
