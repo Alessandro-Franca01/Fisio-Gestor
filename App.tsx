@@ -8,6 +8,7 @@ import { PatientList } from './pages/PatientList';
 import { PatientDetail } from './pages/PatientDetail';
 import { Finance } from './pages/Finance';
 import { AppointmentCreate } from './pages/AppointmentCreate';
+import { AppointmentDetail } from './pages/AppointmentDetail';
 import { SessionCreate } from './pages/SessionCreate';
 import { AppointmentExecute } from './pages/AppointmentExecute';
 import { Agenda } from './pages/Agenda';
@@ -67,8 +68,10 @@ export default function App() {
           <Route path="/agenda" element={<Agenda />} />
 
           <Route path="/appointments/new" element={<AppointmentCreate />} />
+          <Route path="/appointments/:id/edit" element={<AppointmentCreate />} />
           <Route path="/appointments/execute" element={<AppointmentExecute />} />
-          <Route path="/appointments/:id" element={<AppointmentExecute />} />
+          <Route path="/appointments/:id/execute" element={<AppointmentExecute />} />
+          <Route path="/appointments/:id" element={<AppointmentDetail />} />
 
           <Route path="/sessions" element={<SessionList />} />
           <Route path="/sessions/new" element={<SessionCreate />} />

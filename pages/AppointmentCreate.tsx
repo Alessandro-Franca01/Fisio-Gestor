@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
-import { createAppointment } from '../services/appointmentService';
+import { hours } from './Agenda';
+import { createAppointment, getAppointmentById, updateAppointment } from '../services/appointmentService';
 import { getHealthPlans, HealthPlan } from '../services/healthPlanService';
 import { getPatients, Patient } from '../services/patientService';
 import { AppointmentCategory } from '../types';
@@ -9,6 +10,8 @@ import { AppointmentCategory } from '../types';
 export const AppointmentCreate: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { id } = useParams();
+  const isEditing = !!id;
 
   const [patientId, setPatientId] = useState<number | ''>('');
   const [date, setDate] = useState('');
@@ -23,6 +26,7 @@ export const AppointmentCreate: React.FC = () => {
   const [healthPlanId, setHealthPlanId] = useState('');
   const [patients, setPatients] = useState<Patient[]>([]);
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [status, setStatus] = useState('Pendente');
 
   useEffect(() => {
     const fetchPatients = async () => {
@@ -57,15 +61,41 @@ export const AppointmentCreate: React.FC = () => {
     fetchHealthPlans();
   }, []);
 
+  // Load appointment data if editing
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const qDate = params.get('date');
-    const qTime = params.get('time');
-    const qRoom = params.get('room');
-    if (qDate) setDate(qDate);
-    if (qTime) setTime(qTime);
-    if (qRoom) setRoom(qRoom);
-  }, [location.search]);
+    if (isEditing) {
+      const loadAppointment = async () => {
+        try {
+          const data = await getAppointmentById(id!);
+          setPatientId(data.patient_id);
+          setDate(data.date ? data.date.substring(0, 10) : '');
+          setTime(data.scheduled_time ? data.scheduled_time.substring(0, 5) : '');
+          setType(data.type);
+          setObservations(data.observations || '');
+          setCategory(data.category as AppointmentCategory || AppointmentCategory.PRIVATE);
+          setRoom(data.room || '');
+          setHealthPlanId(data.health_plan_id ? String(data.health_plan_id) : '');
+          setStatus(data.status || 'Pendente');
+        } catch (err) {
+          console.error('Failed to load appointment', err);
+          setError('Erro ao carregar dados do agendamento.');
+        }
+      };
+      loadAppointment();
+    }
+  }, [isEditing, id]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      const params = new URLSearchParams(location.search);
+      const qDate = params.get('date');
+      const qTime = params.get('time');
+      const qRoom = params.get('room');
+      if (qDate) setDate(qDate);
+      if (qTime) setTime(qTime);
+      if (qRoom) setRoom(qRoom);
+    }
+  }, [location.search, isEditing]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -89,17 +119,23 @@ export const AppointmentCreate: React.FC = () => {
         observations: observations || null,
         room: room,
         category: category,
+        status: status,
         health_plan_id: category === AppointmentCategory.CLINIC ? (healthPlanId ? Number(healthPlanId) : null) : null,
       } as any;
 
-      const created = await createAppointment(payload);
-      const createdId = created?.id ?? created?.data?.id;
-      if (createdId) {
-        navigate(`/appointments/${createdId}`);
-      } else if (created && created.id) {
-        navigate(`/appointments/${created.id}`);
+      if (isEditing) {
+        await updateAppointment(id!, payload);
+        navigate(`/appointments/${id}`);
       } else {
-        navigate('/appointments');
+        const created = await createAppointment(payload);
+        const createdId = created?.id ?? created?.data?.id;
+        if (createdId) {
+          navigate(`/appointments/${createdId}`);
+        } else if (created && created.id) {
+          navigate(`/appointments/${created.id}`);
+        } else {
+          navigate('/appointments');
+        }
       }
     } catch (err: any) {
       if (err?.response?.status === 422) {
@@ -118,8 +154,12 @@ export const AppointmentCreate: React.FC = () => {
   return (
     <form onSubmit={handleSubmit} className="max-w-4xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">Novo Atendimento</h1>
-        <p className="text-subtle-light dark:text-subtle-dark mt-1">Agende uma sessão individual ou adicione a um grupo na clínica.</p>
+        <h1 className="text-text-light dark:text-text-dark text-4xl font-black leading-tight tracking-[-0.033em]">
+          {isEditing ? 'Editar Atendimento' : 'Novo Atendimento'}
+        </h1>
+        <p className="text-subtle-light dark:text-subtle-dark mt-1">
+          {isEditing ? 'Atualize os dados do agendamento.' : 'Agende uma sessão individual ou adicione a um grupo na clínica.'}
+        </p>
       </header>
 
       <div className="space-y-8">
@@ -128,6 +168,7 @@ export const AppointmentCreate: React.FC = () => {
           <h2 className="text-xl font-bold text-text-light dark:text-text-dark mb-4">Tipo de Atendimento</h2>
           <div className="flex p-1 bg-background-light dark:bg-background-dark rounded-xl border border-border-light dark:border-border-dark w-full sm:w-fit">
             <button
+              type="button"
               onClick={() => setCategory(AppointmentCategory.PRIVATE)}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${category === AppointmentCategory.PRIVATE ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
             >
@@ -135,8 +176,10 @@ export const AppointmentCreate: React.FC = () => {
               Atendimento Privado
             </button>
             <button
+              type="button"
               onClick={() => setCategory(AppointmentCategory.CLINIC)}
               className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${category === AppointmentCategory.CLINIC ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
+              disabled={isEditing}
             >
               <Icon name="domain" />
               Atendimento em Clínica
@@ -157,12 +200,18 @@ export const AppointmentCreate: React.FC = () => {
             <div className="md:col-span-1">
               <label className="flex flex-col">
                 <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Buscar Paciente</p>
-                <select value={patientId} onChange={e => setPatientId(e.target.value ? Number(e.target.value) : '')} className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base">
+                <select
+                  value={patientId}
+                  onChange={e => setPatientId(e.target.value ? Number(e.target.value) : '')}
+                  className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                  disabled={isEditing}
+                >
                   <option value="">Busque e selecione um paciente</option>
                   {patients.map(p => (
                     <option key={p.id} value={p.id}>{p.name}</option>
                   ))}
                 </select>
+                {isEditing && <p className="text-xs text-subtle-light dark:text-subtle-dark mt-1">O paciente não pode ser alterado na edição.</p>}
               </label>
             </div>
             <div className="md:col-span-1 flex items-center justify-between gap-4 rounded-lg p-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark">
@@ -225,12 +274,40 @@ export const AppointmentCreate: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Data</p>
-              <input value={date} onChange={e => setDate(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="date" />
+              <input
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+                type="date" />
             </label>
 
             <label className="flex flex-col min-w-40 flex-1">
               <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Hora</p>
-              <input value={time} onChange={e => setTime(e.target.value)} className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base" type="time" />
+              <select
+                value={time}
+                onChange={e => setTime(e.target.value)}
+                className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+              >
+                <option value="">Selecione o horário</option>
+                {hours.map(hour => (
+                  <option key={hour} value={hour}>{hour}</option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col min-w-40 flex-1">
+              <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Status</p>
+              <select
+                value={status}
+                onChange={e => setStatus(e.target.value)}
+                className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-14 px-4 text-base"
+              >
+                <option value="Pendente">Pendente</option>
+                <option value="Confirmado">Confirmado</option>
+                <option value="Realizado">Realizado</option>
+                <option value="Cancelado">Cancelado</option>
+                <option value="Faltou">Faltou</option>
+              </select>
             </label>
 
             {category === AppointmentCategory.CLINIC && (
@@ -248,12 +325,6 @@ export const AppointmentCreate: React.FC = () => {
                 </select>
               </label>
             )}
-            {category === AppointmentCategory.PRIVATE && (
-              <label className="flex flex-col min-w-40 flex-1">
-                <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Status Inicial</p>
-                <input className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-subtle-light dark:text-subtle-dark border border-border-light dark:border-border-dark bg-background-light/50 dark:bg-background-dark/50 h-14 px-4 text-base font-medium cursor-not-allowed" readOnly value="Agendado" />
-              </label>
-            )}
           </div>
 
           <div className="mt-6">
@@ -265,8 +336,13 @@ export const AppointmentCreate: React.FC = () => {
         </section>
 
         <div className="flex justify-between items-center gap-4 pt-4">
-          <div className="text-left text-sm text-red-600">{error}</div>
-          <div className="flex justify-end gap-4">
+          {error && (
+            <div className="flex-1 text-left p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
+              <Icon name="error" />
+              <span>{error}</span>
+            </div>
+          )}
+          <div className="flex items-center gap-4 ml-auto">
             <button onClick={() => navigate(-1)} className="px-6 py-3 rounded-lg text-base font-bold text-text-light dark:text-text-dark bg-transparent hover:bg-primary/20 transition-colors" type="button">Cancelar</button>
             <button
               disabled={isSubmitting}
