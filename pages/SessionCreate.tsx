@@ -48,7 +48,6 @@ export const SessionCreate: React.FC = () => {
     category: AppointmentCategory.PRIVATE,
     room: 'no_room',
     health_plan_id: '',
-    health_plan_id: '',
   });
 
   // Payment States
@@ -138,6 +137,16 @@ export const SessionCreate: React.FC = () => {
       }
     }
   }, [formData.total_value]);
+
+  // Automate payment for Clinic Health Plan
+  useEffect(() => {
+    if (formData.category === AppointmentCategory.CLINIC && formData.health_plan_id) {
+      // Health Plan selected: Force Paid = True, Method = Convenio
+      setIsPaid(false);
+      setPaymentMethod('Convenio');
+      // paymentAmount is already being updated by the useEffect watching total_value
+    }
+  }, [formData.category, formData.health_plan_id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -567,7 +576,10 @@ export const SessionCreate: React.FC = () => {
                     <option value="Pix">Pix</option>
                     <option value="Cartao">Cartão</option>
                     <option value="Debito">Débito</option>
+                    <option value="Cartao">Cartão</option>
+                    <option value="Debito">Débito</option>
                     <option value="Gratuito">Gratuito</option>
+                    <option value="Convenio">Convênio</option>
                   </select>
                 </label>
               </div>

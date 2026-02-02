@@ -102,6 +102,19 @@ export const AppointmentCreate: React.FC = () => {
     }
   }, [location.search, isEditing]);
 
+  // Automate payment for Clinic Health Plan
+  useEffect(() => {
+    if (category === AppointmentCategory.CLINIC && healthPlanId) {
+      const plan = healthPlans.find(p => p.id === Number(healthPlanId));
+      if (plan) {
+        setIsPaid(true);
+        setPaymentMethod('Convenio');
+        const formattedValue = plan.value ? plan.value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : 'R$ 0,00';
+        setPaymentAmount(formattedValue);
+      }
+    }
+  }, [category, healthPlanId, healthPlans]);
+
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError(null);
@@ -400,7 +413,10 @@ export const AppointmentCreate: React.FC = () => {
                   <option value="Pix">Pix</option>
                   <option value="Cartao">Cartão</option>
                   <option value="Debito">Débito</option>
+                  <option value="Cartao">Cartão</option>
+                  <option value="Debito">Débito</option>
                   <option value="Gratuito">Gratuito</option>
+                  <option value="Convenio">Convênio</option>
                 </select>
               </label>
             </div>
