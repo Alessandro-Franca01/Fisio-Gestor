@@ -3,18 +3,24 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import assessmentService, { Assessment } from '../services/assessmentService';
 
-export const AssessmentList: React.FC = () => {
+interface AssessmentListProps {
+  patientId?: string;
+}
+
+export const AssessmentList: React.FC<AssessmentListProps> = ({ patientId: propPatientId }) => {
   const navigate = useNavigate();
-  const { patientId } = useParams<{ patientId: string }>();
+  const { patientId: paramsPatientId, id: paramsId } = useParams<{ patientId?: string; id?: string }>();
+
+  const effectivePatientId = propPatientId || paramsPatientId || paramsId;
   const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (patientId) {
-      fetchAssessments(parseInt(patientId));
+    if (effectivePatientId) {
+      fetchAssessments(parseInt(effectivePatientId));
     }
-  }, [patientId]);
+  }, [effectivePatientId]);
 
   const fetchAssessments = async (pId: number) => {
     try {
@@ -30,12 +36,12 @@ export const AssessmentList: React.FC = () => {
   };
 
   const handleDelete = async (assessmentId: number) => {
-    if (!patientId) return;
+    if (!effectivePatientId) return;
 
     if (window.confirm('Tem certeza que deseja deletar esta avaliação?')) {
       try {
-        await assessmentService.deleteAssessment(parseInt(patientId), assessmentId);
-        fetchAssessments(parseInt(patientId));
+        await assessmentService.deleteAssessment(parseInt(effectivePatientId), assessmentId);
+        fetchAssessments(parseInt(effectivePatientId));
       } catch (err) {
         setError('Erro ao deletar avaliação');
       }
@@ -62,38 +68,40 @@ export const AssessmentList: React.FC = () => {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-2">
-          <Icon name="assignment_turned_in" className="text-blue-600 text-2xl" />
-          <h2 className="text-2xl font-bold text-gray-800">Avaliações Fisioterapêuticas</h2>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="p-2 bg-primary/10 rounded-lg text-primary">
+            <Icon name="assignment_turned_in" />
+          </div>
+          <h2 className="text-lg font-bold text-text-light dark:text-text-dark">Avaliações Fisioterapêuticas</h2>
         </div>
-        {patientId && (
+        {effectivePatientId && (
           <button
-            onClick={() => navigate(`/patient/${patientId}/assessment/new`)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+            onClick={() => navigate(`/patient/${effectivePatientId}/assessment/new`)}
+            className="flex items-center gap-2 px-4 py-2 bg-primary text-background-dark rounded-lg hover:bg-opacity-90 transition font-bold text-sm"
           >
             <Icon name="add" />
-            Nova Avaliação
+            <span className="hidden sm:inline">Nova Avaliação</span>
           </button>
         )}
       </div>
 
       {error && (
-        <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg flex items-center gap-2">
+        <div className="p-4 bg-red-500/10 border border-red-500/20 text-red-500 rounded-lg flex items-center gap-2 text-sm">
           <Icon name="error" />
           {error}
         </div>
       )}
 
       {assessments.length === 0 ? (
-        <div className="bg-white border border-gray-200 rounded-lg p-8 text-center">
-          <Icon name="assignment" className="text-gray-400 text-5xl mx-auto mb-4" />
-          <p className="text-gray-600 mb-4">Nenhuma avaliação fisioterapêutica registrada</p>
-          {patientId && (
+        <div className="bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl p-8 text-center">
+          <Icon name="assignment" className="text-subtle-light dark:text-subtle-dark text-5xl mx-auto mb-4" />
+          <p className="text-subtle-light dark:text-subtle-dark mb-4">Nenhuma avaliação fisioterapêutica registrada</p>
+          {effectivePatientId && (
             <button
-              onClick={() => navigate(`/patient/${patientId}/assessment/new`)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              onClick={() => navigate(`/patient/${effectivePatientId}/assessment/new`)}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-lg hover:bg-primary/20 transition font-bold text-sm"
             >
               <Icon name="add" />
               Criar Primeira Avaliação
@@ -105,76 +113,76 @@ export const AssessmentList: React.FC = () => {
           {assessments.map((assessment) => (
             <div
               key={assessment.id}
-              className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-lg transition cursor-pointer"
-              onClick={() => navigate(`/patient/${patientId}/assessment/${assessment.id}`)}
+              className="bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark rounded-xl p-5 hover:border-primary/50 transition-all cursor-pointer group"
+              onClick={() => navigate(`/patient/${effectivePatientId}/assessment/${assessment.id}`)}
             >
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                    <h3 className="text-lg font-semibold text-gray-800">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-2 h-2 bg-primary rounded-full shadow-[0_0_8px_rgba(var(--primary-rgb),0.5)]" />
+                    <h3 className="text-base font-semibold text-text-light dark:text-text-dark group-hover:text-primary transition-colors">
                       Avaliação de {assessment.chief_complaint || 'Fisioterapia'}
                     </h3>
                   </div>
-                  <p className="text-sm text-gray-600">
-                    Criada em {formatDate(assessment.created_at)} por {assessment.user?.name || 'N/A'}
+                  <p className="text-xs text-subtle-light dark:text-subtle-dark">
+                    Criada em {formatDate(assessment.created_at)} {assessment.user?.name && `por ${assessment.user.name}`}
                   </p>
                 </div>
                 <div className="flex gap-2">
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      navigate(`/patient/${patientId}/assessment/${assessment.id}/edit`);
+                      navigate(`/patient/${effectivePatientId}/assessment/${assessment.id}/edit`);
                     }}
-                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                    className="p-2 text-subtle-light dark:text-subtle-dark hover:text-primary hover:bg-primary/10 rounded-lg transition"
                   >
-                    <Icon name="edit" />
+                    <Icon name="edit" className="text-sm" />
                   </button>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDelete(assessment.id);
                     }}
-                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition"
+                    className="p-2 text-subtle-light dark:text-subtle-dark hover:text-red-500 hover:bg-red-500/10 rounded-lg transition"
                   >
-                    <Icon name="delete" />
+                    <Icon name="delete" className="text-sm" />
                   </button>
                 </div>
               </div>
 
               {/* Summary Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
                 {assessment.pain_level !== null && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600">Nível de Dor</p>
-                    <p className="text-lg font-bold text-red-600">{assessment.pain_level}/10</p>
+                  <div className="bg-surface-light dark:bg-surface-dark p-2 rounded-lg border border-border-light dark:border-border-dark">
+                    <p className="text-[10px] uppercase tracking-wider text-subtle-light dark:text-subtle-dark font-bold">Dor</p>
+                    <p className="text-sm font-bold text-red-500">{assessment.pain_level}/10</p>
                   </div>
                 )}
                 {assessment.duration && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600">Duração</p>
-                    <p className="text-sm font-semibold text-gray-800">{assessment.duration}</p>
+                  <div className="bg-surface-light dark:bg-surface-dark p-2 rounded-lg border border-border-light dark:border-border-dark">
+                    <p className="text-[10px] uppercase tracking-wider text-subtle-light dark:text-subtle-dark font-bold">Duração</p>
+                    <p className="text-sm font-semibold text-text-light dark:text-text-dark">{assessment.duration}</p>
                   </div>
                 )}
                 {assessment.recommended_frequency && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600">Frequência</p>
-                    <p className="text-sm font-semibold text-gray-800">{assessment.recommended_frequency}</p>
+                  <div className="bg-surface-light dark:bg-surface-dark p-2 rounded-lg border border-border-light dark:border-border-dark">
+                    <p className="text-[10px] uppercase tracking-wider text-subtle-light dark:text-subtle-dark font-bold">Frequência</p>
+                    <p className="text-sm font-semibold text-text-light dark:text-text-dark">{assessment.recommended_frequency}</p>
                   </div>
                 )}
                 {assessment.estimated_duration && (
-                  <div className="bg-gray-50 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600">Dur. Estimada</p>
-                    <p className="text-sm font-semibold text-gray-800">{assessment.estimated_duration}</p>
+                  <div className="bg-surface-light dark:bg-surface-dark p-2 rounded-lg border border-border-light dark:border-border-dark">
+                    <p className="text-[10px] uppercase tracking-wider text-subtle-light dark:text-subtle-dark font-bold">Total Est.</p>
+                    <p className="text-sm font-semibold text-text-light dark:text-text-dark">{assessment.estimated_duration}</p>
                   </div>
                 )}
               </div>
 
               {/* Preview */}
               {assessment.physio_diagnosis && (
-                <div className="mt-4 p-3 bg-blue-50 rounded-lg border-l-4 border-blue-500">
-                  <p className="text-xs font-medium text-blue-600 mb-1">Diagnóstico</p>
-                  <p className="text-sm text-gray-700 line-clamp-2">{assessment.physio_diagnosis}</p>
+                <div className="mt-4 p-3 bg-primary/5 rounded-lg border-l-2 border-primary">
+                  <p className="text-[10px] uppercase tracking-wider font-bold text-primary mb-1">Diagnóstico</p>
+                  <p className="text-xs text-text-light dark:text-text-dark line-clamp-2 leading-relaxed">{assessment.physio_diagnosis}</p>
                 </div>
               )}
             </div>

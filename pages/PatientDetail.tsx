@@ -322,7 +322,7 @@ export const PatientDetail: React.FC = () => {
 
           {/* Assessments */}
           <div className="col-span-1 md:col-span-2 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6">
-            <AssessmentList />
+            <AssessmentList patientId={id} />
           </div>
         </div>
       </div>
