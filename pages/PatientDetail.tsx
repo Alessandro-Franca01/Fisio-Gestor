@@ -3,6 +3,7 @@ import { Icon } from '../components/Icon';
 import { useNavigate, useParams } from 'react-router-dom';
 import patientService, { Patient } from '../services/patientService';
 import addressService, { Address } from '../services/addressService';
+import { AssessmentList } from './AssessmentList';
 
 export const PatientDetail: React.FC = () => {
   const navigate = useNavigate();
@@ -317,6 +318,11 @@ export const PatientDetail: React.FC = () => {
                 {patient.notes || 'Nenhuma observação cadastrada.'}
               </p>
             </div>
+          </div>
+
+          {/* Assessments */}
+          <div className="col-span-1 md:col-span-2 bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark rounded-xl p-6">
+            <AssessmentList patientId={id} />
           </div>
         </div>
       </div>
