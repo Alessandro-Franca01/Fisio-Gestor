@@ -21,12 +21,31 @@ export interface Patient {
   payments?: any[];
   total_to_pay?: number;
   total_paid?: number;
+  financial_status?: string;
+  avatar_url?: string;
+  img?: string;
+}
+
+export interface PaginatedResponse<T> {
+  data: T[];
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+  from: number;
+  to: number;
+  links: {
+    url: string | null;
+    label: string;
+    active: boolean;
+  }[];
 }
 
 export const getPatients = async (params?: any): Promise<any> => {
   try {
     const response = await api.get('/patients', { params });
-    return response.data?.data ?? response.data;
+    // Return the full response if it has pagination structure, otherwise just data
+    return response.data;
   } catch (error) {
     console.error('Error fetching patients:', error);
     throw error;

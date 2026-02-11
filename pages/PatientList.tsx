@@ -1,22 +1,27 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Icon } from '../components/Icon';
 import { useNavigate } from 'react-router-dom';
-import { getPatients } from '../services/patientService';
+import { getPatients, PaginatedResponse, Patient } from '../services/patientService';
 
 export const PatientList: React.FC = () => {
   const navigate = useNavigate();
-  const [patients, setPatients] = useState<any[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [pagination, setPagination] = useState<PaginatedResponse<Patient> | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
+  const [page, setPage] = useState(1);
   const debounceRef = useRef<number | null>(null);
 
-  const loadPatients = async (params?: any) => {
+  const loadPatients = async (pageToLoad = 1, searchQuery = search) => {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getPatients(params);
-      setPatients(Array.isArray(data) ? data : []);
+      const params = { page: pageToLoad, ...(searchQuery ? { search: searchQuery } : {}) };
+      const response = await getPatients(params);
+      setPatients(response.data || []);
+      setPagination(response);
+      setPage(pageToLoad);
     } catch (err: any) {
       console.error('Failed to load patients:', err);
       setError('Erro ao carregar pacientes');
@@ -38,7 +43,8 @@ export const PatientList: React.FC = () => {
     // debounce search
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
-      loadPatients(search ? { search } : undefined);
+      setPage(1);
+      loadPatients(1, search);
     }, 300) as unknown as number;
 
     return () => {
@@ -122,6 +128,68 @@ export const PatientList: React.FC = () => {
           </table>
         )}
       </div>
+
+      {/* Pagination Controls */}
+      {pagination && pagination.last_page > 1 && (
+        <div className="flex items-center justify-between border-t border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 sm:px-6 mt-4 rounded-lg">
+          <div className="flex flex-1 justify-between sm:hidden">
+            <button
+              onClick={() => loadPatients(page - 1)}
+              disabled={page === 1}
+              className="relative inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+            >
+              Anterior
+            </button>
+            <button
+              onClick={() => loadPatients(page + 1)}
+              disabled={page === pagination.last_page}
+              className="relative ml-3 inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+            >
+              Próximo
+            </button>
+          </div>
+          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm text-subtle-light dark:text-subtle-dark">
+                Mostrando <span className="font-medium">{pagination.from}</span> até <span className="font-medium">{pagination.to}</span> de{' '}
+                <span className="font-medium">{pagination.total}</span> resultados
+              </p>
+            </div>
+            <div>
+              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                <button
+                  onClick={() => loadPatients(page - 1)}
+                  disabled={page === 1}
+                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                >
+                  <span className="sr-only">Anterior</span>
+                  <Icon name="chevron_left" className="h-5 w-5" />
+                </button>
+                {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => loadPatients(p)}
+                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${p === page
+                      ? 'z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
+                      : 'text-text-light dark:text-text-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0'
+                      }`}
+                  >
+                    {p}
+                  </button>
+                ))}
+                <button
+                  onClick={() => loadPatients(page + 1)}
+                  disabled={page === pagination.last_page}
+                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
+                >
+                  <span className="sr-only">Próximo</span>
+                  <Icon name="chevron_right" className="h-5 w-5" />
+                </button>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
