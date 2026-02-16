@@ -168,14 +168,6 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
-            {/* Observações */}
-            <div>
-              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Observações da Sessão</h3>
-              <div className="pt-5">
-                <textarea value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-36 p-4 text-base" placeholder="Descreva a evolução do paciente, exercícios realizados, intercorrências, etc."></textarea>
-              </div>
-            </div>
-
             {/* Conduta Fisioterapêutica */}
             <div>
               <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Conduta Fisioterapêutica</h3>
@@ -215,6 +207,14 @@ export const AppointmentExecute: React.FC = () => {
                   </div>
                   <p className="text-xs leading-5 text-subtle-light dark:text-subtle-dark">PNG, JPG, GIF até 10MB</p>
                 </div>
+              </div>
+            </div>
+
+            {/* Observações */}
+            <div>
+              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Evolução / Observação </h3>
+              <div className="pt-5">
+                <textarea value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-36 p-4 text-base" placeholder="Descreva a evolução do paciente, exercícios realizados, intercorrências, etc."></textarea>
               </div>
             </div>
 
