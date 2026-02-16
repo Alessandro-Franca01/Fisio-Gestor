@@ -189,7 +189,6 @@ export const executeAppointment = async (id: string, payload: {
   end_time: any;
   session_notes?: string | null;
   status: 'Realizado';
-  treatment_objectives?: string;
   resources?: string[];
 }) => {
   try {

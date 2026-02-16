@@ -25,6 +25,9 @@ export const AppointmentExecute: React.FC = () => {
     'Termoterapia',
     'Crioterapia',
     'Terapia Manual',
+    'Kinesio Tape',
+    'Auriculoterapia',
+    'Agulhamento a Seco',
     'Outros'
   ];
 
@@ -47,7 +50,6 @@ export const AppointmentExecute: React.FC = () => {
         setStartTime(data?.start_time ?? data?.scheduled_time ?? '');
         setEndTime(data?.end_time ?? '');
         setSessionNotes(data?.session_notes ?? '');
-        setTreatmentObjectives(data?.treatment_objectives ?? '');
         setSelectedResources(data?.resources && Array.isArray(data?.resources) ? data.resources : []);
       } catch (err: any) {
         console.error('Failed to load appointment:', err);
@@ -178,17 +180,7 @@ export const AppointmentExecute: React.FC = () => {
             <div>
               <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Conduta Fisioterapêutica</h3>
 
-              <div className="pt-5 space-y-6">
-                <div>
-                  <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Objetivos do Tratamento:</p>
-                  <textarea
-                    value={treatmentObjectives}
-                    onChange={e => setTreatmentObjectives(e.target.value)}
-                    className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-24 p-4 text-base"
-                    placeholder="Descreva os objetivos do tratamento para esta sessão."
-                  ></textarea>
-                </div>
-
+              <div className="pt-5">
                 <div>
                   <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Recursos Utilizados:</p>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -239,7 +231,6 @@ export const AppointmentExecute: React.FC = () => {
                     end_time: endTime,
                     session_notes: sessionNotes || null,
                     status: 'Realizado',
-                    treatment_objectives: treatmentObjectives || undefined,
                     resources: selectedResources.length > 0 ? selectedResources : undefined
                   });
                   navigate('/agenda');
