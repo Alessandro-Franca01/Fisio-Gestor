@@ -189,6 +189,8 @@ export const executeAppointment = async (id: string, payload: {
   end_time: any;
   session_notes?: string | null;
   status: 'Realizado';
+  treatment_objectives?: string;
+  resources?: string[];
 }) => {
   try {
     const response = await api.post(`/appointments/${id}/execute`, payload);

@@ -15,7 +15,26 @@ export const AppointmentExecute: React.FC = () => {
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [sessionNotes, setSessionNotes] = useState<string>('');
+  const [treatmentObjectives, setTreatmentObjectives] = useState<string>('');
+  const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [isSubmittingExecute, setIsSubmittingExecute] = useState(false);
+
+  const availableResources = [
+    'Cinesioterapia',
+    'Eletroterapia',
+    'Termoterapia',
+    'Crioterapia',
+    'Terapia Manual',
+    'Outros'
+  ];
+
+  const toggleResource = (resource: string) => {
+    setSelectedResources(prev =>
+      prev.includes(resource)
+        ? prev.filter(r => r !== resource)
+        : [...prev, resource]
+    );
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -28,6 +47,8 @@ export const AppointmentExecute: React.FC = () => {
         setStartTime(data?.start_time ?? data?.scheduled_time ?? '');
         setEndTime(data?.end_time ?? '');
         setSessionNotes(data?.session_notes ?? '');
+        setTreatmentObjectives(data?.treatment_objectives ?? '');
+        setSelectedResources(data?.resources && Array.isArray(data?.resources) ? data.resources : []);
       } catch (err: any) {
         console.error('Failed to load appointment:', err);
         setError('Erro ao carregar agendamento.');
@@ -153,6 +174,40 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
+            {/* Conduta Fisioterapêutica */}
+            <div>
+              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Conduta Fisioterapêutica</h3>
+
+              <div className="pt-5 space-y-6">
+                <div>
+                  <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Objetivos do Tratamento:</p>
+                  <textarea
+                    value={treatmentObjectives}
+                    onChange={e => setTreatmentObjectives(e.target.value)}
+                    className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-24 p-4 text-base"
+                    placeholder="Descreva os objetivos do tratamento para esta sessão."
+                  ></textarea>
+                </div>
+
+                <div>
+                  <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Recursos Utilizados:</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {availableResources.map(resource => (
+                      <label key={resource} className="flex items-center gap-2 cursor-pointer p-3 border border-border-light dark:border-border-dark rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedResources.includes(resource)}
+                          onChange={() => toggleResource(resource)}
+                          className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary"
+                        />
+                        <span className="text-text-light dark:text-text-dark text-sm font-medium">{resource}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* Anexar Foto */}
             <div>
               <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Anexar Foto (Opcional)</h3>
@@ -179,7 +234,14 @@ export const AppointmentExecute: React.FC = () => {
                 setIsSubmittingExecute(true);
                 setError(null);
                 try {
-                  await executeAppointment(id, { start_time: startTime, end_time: endTime, session_notes: sessionNotes || null, status: 'Realizado' });
+                  await executeAppointment(id, {
+                    start_time: startTime,
+                    end_time: endTime,
+                    session_notes: sessionNotes || null,
+                    status: 'Realizado',
+                    treatment_objectives: treatmentObjectives || undefined,
+                    resources: selectedResources.length > 0 ? selectedResources : undefined
+                  });
                   navigate('/agenda');
                 } catch (err) {
                   console.error('Execute failed:', err);
