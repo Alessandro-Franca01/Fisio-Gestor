@@ -180,16 +180,30 @@ export const AppointmentDetail: React.FC = () => {
                         </div>
                     </div>
                     {isDone && (
-                        <div className="md:col-span-2">
-                            <p className="text-sm text-subtle-light dark:text-subtle-dark mb-2">Evolução do Paciente (Notas da Execução)</p>
-                            <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-lg border border-green-200 dark:border-green-800/30 min-h-24">
-                                {appointment.session_notes ? (
-                                    <p className="text-text-light dark:text-text-dark whitespace-pre-wrap">{appointment.session_notes}</p>
-                                ) : (
-                                    <p className="text-subtle-light dark:text-subtle-dark italic">Nenhuma nota de evolução registrada.</p>
-                                )}
+                        <>
+                            <div className="md:col-span-2">
+                                <p className="text-sm text-subtle-light dark:text-subtle-dark mb-2">Evolução do Paciente (Notas da Execução)</p>
+                                <div className="bg-green-50 dark:bg-green-900/10 p-4 rounded-lg border border-green-200 dark:border-green-800/30 min-h-24">
+                                    {appointment.session_notes ? (
+                                        <p className="text-text-light dark:text-text-dark whitespace-pre-wrap">{appointment.session_notes}</p>
+                                    ) : (
+                                        <p className="text-subtle-light dark:text-subtle-dark italic">Nenhuma nota de evolução registrada.</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                            {appointment.resources && Array.isArray(appointment.resources) && appointment.resources.length > 0 && (
+                                <div className="md:col-span-2 mt-2">
+                                    <p className="text-sm text-subtle-light dark:text-subtle-dark mb-2">Recursos Utilizados (Conduta)</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {appointment.resources.map((resource: string, index: number) => (
+                                            <span key={index} className="inline-flex items-center rounded-lg bg-primary/10 dark:bg-primary/20 px-3 py-1 text-sm font-medium text-primary border border-primary/20">
+                                                {resource}
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </>
                     )}
                 </div>
             </div>

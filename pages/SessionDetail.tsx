@@ -42,7 +42,7 @@ export const SessionDetail: React.FC = () => {
         );
     }
 
-    const completed = session.appointments?.filter(a => a.status === 'Realizado').length || 0;
+    const completed = session.appointments?.filter(a => a.status === 'Realizado' || a.status === 'Faltou').length || 0;
     const total = session.total_appointments;
     const progress = (completed / total) * 100;
 
@@ -172,6 +172,7 @@ export const SessionDetail: React.FC = () => {
                                       ${item.status === 'Realizado' ? 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-300' : ''}
                                       ${item.status === 'Agendado' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' : ''}
                                       ${item.status === 'Cancelado' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : ''}
+                                      ${item.status === 'Faltou' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : ''}
                                   `}>
                                                 {item.status}
                                             </span>

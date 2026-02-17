@@ -36,8 +36,8 @@ export const AppointmentCreate: React.FC = () => {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const data = await getPatients();
-        setPatients(data);
+        const response = await getPatients({ per_page: 100 });
+        setPatients(response.data || (Array.isArray(response) ? response : []));
       } catch (error) {
         console.error('Failed to fetch patients', error);
       }

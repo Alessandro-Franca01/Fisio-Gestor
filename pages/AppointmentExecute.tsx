@@ -15,7 +15,29 @@ export const AppointmentExecute: React.FC = () => {
   const [startTime, setStartTime] = useState<string>('');
   const [endTime, setEndTime] = useState<string>('');
   const [sessionNotes, setSessionNotes] = useState<string>('');
+  const [treatmentObjectives, setTreatmentObjectives] = useState<string>('');
+  const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [isSubmittingExecute, setIsSubmittingExecute] = useState(false);
+
+  const availableResources = [
+    'Cinesioterapia',
+    'Eletroterapia',
+    'Termoterapia',
+    'Crioterapia',
+    'Terapia Manual',
+    'Kinesio Tape',
+    'Auriculoterapia',
+    'Agulhamento a Seco',
+    'Outros'
+  ];
+
+  const toggleResource = (resource: string) => {
+    setSelectedResources(prev =>
+      prev.includes(resource)
+        ? prev.filter(r => r !== resource)
+        : [...prev, resource]
+    );
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -28,6 +50,7 @@ export const AppointmentExecute: React.FC = () => {
         setStartTime(data?.start_time ?? data?.scheduled_time ?? '');
         setEndTime(data?.end_time ?? '');
         setSessionNotes(data?.session_notes ?? '');
+        setSelectedResources(data?.resources && Array.isArray(data?.resources) ? data.resources : []);
       } catch (err: any) {
         console.error('Failed to load appointment:', err);
         setError('Erro ao carregar agendamento.');
@@ -145,11 +168,27 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
-            {/* Observações */}
+            {/* Conduta Fisioterapêutica */}
             <div>
-              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Observações da Sessão</h3>
+              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Conduta Fisioterapêutica</h3>
+
               <div className="pt-5">
-                <textarea value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-36 p-4 text-base" placeholder="Descreva a evolução do paciente, exercícios realizados, intercorrências, etc."></textarea>
+                <div>
+                  <p className="text-text-light dark:text-text-dark text-base font-medium leading-normal pb-2">Recursos Utilizados:</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {availableResources.map(resource => (
+                      <label key={resource} className="flex items-center gap-2 cursor-pointer p-3 border border-border-light dark:border-border-dark rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors">
+                        <input
+                          type="checkbox"
+                          checked={selectedResources.includes(resource)}
+                          onChange={() => toggleResource(resource)}
+                          className="w-5 h-5 text-primary rounded border-gray-300 focus:ring-primary"
+                        />
+                        <span className="text-text-light dark:text-text-dark text-sm font-medium">{resource}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -171,6 +210,14 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
+            {/* Observações */}
+            <div>
+              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Evolução / Observação </h3>
+              <div className="pt-5">
+                <textarea value={sessionNotes} onChange={e => setSessionNotes(e.target.value)} className="form-textarea w-full resize-y rounded-lg text-text-light dark:text-text-dark focus:outline-none focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark min-h-36 p-4 text-base" placeholder="Descreva a evolução do paciente, exercícios realizados, intercorrências, etc."></textarea>
+              </div>
+            </div>
+
             {/* Action Buttons */}
             <div className="flex justify-end items-center gap-4 mt-10 pt-6 border-t border-border-light dark:border-border-dark">
               <button onClick={() => navigate('/dashboard')} className="h-12 px-6 text-text-light dark:text-text-dark rounded-lg text-sm font-medium hover:bg-primary/10 transition-colors">Cancelar</button>
@@ -179,7 +226,13 @@ export const AppointmentExecute: React.FC = () => {
                 setIsSubmittingExecute(true);
                 setError(null);
                 try {
-                  await executeAppointment(id, { start_time: startTime, end_time: endTime, session_notes: sessionNotes || null, status: 'Realizado' });
+                  await executeAppointment(id, {
+                    start_time: startTime,
+                    end_time: endTime,
+                    session_notes: sessionNotes || null,
+                    status: 'Realizado',
+                    resources: selectedResources.length > 0 ? selectedResources : undefined
+                  });
                   navigate('/agenda');
                 } catch (err) {
                   console.error('Execute failed:', err);
