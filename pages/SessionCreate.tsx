@@ -59,9 +59,11 @@ export const SessionCreate: React.FC = () => {
     const fetchPatients = async () => {
       try {
         const response = await patientService.getPatients({ per_page: 100 });
-        setPatients(response.data || (Array.isArray(response) ? response : []));
+        const patientsData = response?.data || (Array.isArray(response) ? response : []);
+        setPatients(Array.isArray(patientsData) ? patientsData : []);
       } catch (error) {
         console.error('Failed to fetch patients', error);
+        setPatients([]);
       }
     };
     fetchPatients();
@@ -71,9 +73,10 @@ export const SessionCreate: React.FC = () => {
     const fetchHealthPlans = async () => {
       try {
         const plans = await getHealthPlans();
-        setHealthPlans(plans);
+        setHealthPlans(Array.isArray(plans) ? plans : []);
       } catch (error) {
         console.error('Failed to fetch health plans', error);
+        setHealthPlans([]);
       }
     };
     fetchHealthPlans();
@@ -329,8 +332,8 @@ export const SessionCreate: React.FC = () => {
                       className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
                     >
                       <option value="">Selecione o plano</option>
-                      {healthPlans.map(plan => (
-                        <option key={plan.id} value={plan.id}>{plan.name}</option>
+                      {(Array.isArray(healthPlans) ? healthPlans : []).map(plan => (
+                        plan && <option key={plan.id} value={plan.id}>{plan.name}</option>
                       ))}
                     </select>
                   </label>
@@ -362,8 +365,8 @@ export const SessionCreate: React.FC = () => {
                   className={`form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <option value="">Selecione um paciente</option>
-                  {patients.map(patient => (
-                    <option key={patient.id} value={patient.id}>{patient.name}</option>
+                  {(Array.isArray(patients) ? patients : []).map(patient => (
+                    patient && <option key={patient.id} value={patient.id}>{patient.name}</option>
                   ))}
                 </select>
                 {isEditing && <p className="text-xs text-subtle-light dark:text-subtle-dark mt-1">O paciente não pode ser alterado após a criação.</p>}
@@ -472,7 +475,7 @@ export const SessionCreate: React.FC = () => {
                         onChange={(e) => handleScheduleChange(i, 'time', e.target.value)}
                         className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
                       >
-                        {hours.map(hour => (
+                        {Array.isArray(hours) && hours.map(hour => (
                           <option key={hour} value={hour}>{hour}</option>
                         ))}
                       </select>
