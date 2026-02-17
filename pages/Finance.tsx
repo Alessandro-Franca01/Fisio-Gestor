@@ -39,7 +39,7 @@ export const Finance: React.FC = () => {
       setLoading(true);
       const [paymentsData, patientsData] = await Promise.all([
         paymentService.getPayments({ page }),
-        getPatients()
+        getPatients({ per_page: 100 })
       ]);
 
       if (paymentsData && paymentsData.data) {
@@ -53,7 +53,7 @@ export const Finance: React.FC = () => {
         setPayments(Array.isArray(paymentsData) ? paymentsData : []);
       }
 
-      setPatients(patientsData);
+      setPatients(patientsData.data || (Array.isArray(patientsData) ? patientsData : []));
     } catch (err) {
       console.error(err);
       setError('Erro ao carregar dados financeiros.');
