@@ -58,6 +58,7 @@ export type IconName =
   | 'upload_file'
   | 'login'
   | 'visibility'
+  | 'visibility_off'
   | 'exercise'
   | 'bar_chart'
   | 'wallet'

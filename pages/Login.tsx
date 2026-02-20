@@ -8,6 +8,7 @@ export const Login: React.FC = () => {
 
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showPassword, setShowPassword] = React.useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,7 +52,6 @@ export const Login: React.FC = () => {
                   placeholder="seuemail@exemplo.com"
                   type="email"
                   name="email"
-                  defaultValue="dr.carlos@fisiogestor.com"
                 />
               </label>
               <label className="flex flex-col w-full">
@@ -60,12 +60,15 @@ export const Login: React.FC = () => {
                   <input
                     className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark h-14 px-4 pr-12 text-base"
                     placeholder="Sua senha"
-                    type="password"
+                    type={showPassword ? 'text' : 'password'}
                     name="password"
-                    defaultValue="password"
                   />
-                  <button type="button" className="absolute right-0 top-0 h-full px-4 text-subtle-light dark:text-subtle-dark">
-                    <Icon name="visibility" />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-0 top-0 h-full px-4 text-subtle-light dark:text-subtle-dark hover:text-primary transition-colors"
+                  >
+                    <Icon name={showPassword ? 'visibility_off' : 'visibility'} />
                   </button>
                 </div>
               </label>
