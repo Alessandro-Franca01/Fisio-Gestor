@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Icon } from './Icon';
+import { getMe, getLocalUser, clearAuth, User } from '../services/userService';
 
 interface SidebarProps {
   isOpen?: boolean;
@@ -10,12 +11,33 @@ interface SidebarProps {
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(getLocalUser());
 
   const isActive = (path: string) => location.pathname === path;
 
   const handleLogout = () => {
+    clearAuth();
     navigate('/');
   };
+
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      try {
+        const apiUser = await getMe();
+        if (mounted) {
+          setUser(apiUser);
+          try { localStorage.setItem('user', JSON.stringify(apiUser)); } catch {}
+        }
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          clearAuth();
+          navigate('/');
+        }
+      }
+    })();
+    return () => { mounted = false; };
+  }, [navigate]);
 
   const navItemClass = (path: string) => `
     flex items-center gap-3 px-3 py-2 rounded-lg transition-colors
@@ -91,8 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen = false, onClose }) => 
               <Icon name="person" className="text-2xl" />
             </div>
             <div className="flex flex-col overflow-hidden">
-              <h1 className="text-text-light dark:text-text-dark text-sm font-medium leading-normal truncate">Dr. Carlos Silva</h1>
-              <p className="text-subtle-light dark:text-subtle-dark text-xs font-normal leading-normal truncate">Fisioterapeuta</p>
+              <h1 className="text-text-light dark:text-text-dark text-sm font-medium leading-normal truncate">{user?.name ?? 'Dr. Carlos Silva'}</h1>
+              <p className="text-subtle-light dark:text-subtle-dark text-xs font-normal leading-normal truncate">{user?.specialty ?? 'Fisioterapeuta'}</p>
             </div>
             <Icon name="logout" className="ml-auto text-subtle-light dark:text-subtle-dark text-lg" />
           </div>
