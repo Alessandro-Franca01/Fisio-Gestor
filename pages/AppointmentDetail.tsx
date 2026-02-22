@@ -84,7 +84,7 @@ export const AppointmentDetail: React.FC = () => {
                             {appointment.status}
                         </span>
                         <span className="text-subtle-light dark:text-subtle-dark text-sm">
-                            {format(new Date(appointment.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} • {appointment.scheduled_time?.substring(0, 5)}
+                            {format(new Date(appointment.date.substring(0, 10) + 'T00:00:00'), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })} • {appointment.scheduled_time?.substring(0, 5)}
                         </span>
                     </div>
                 </div>

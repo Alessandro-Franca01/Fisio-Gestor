@@ -65,8 +65,13 @@ export const AppointmentExecute: React.FC = () => {
     if (!dateStr) return '—';
 
     try {
-      // Cria a data do jeito que o backend está enviando
-      const date = new Date(dateStr);
+      // If it's a date-only string (YYYY-MM-DD), append T00:00:00 to force local time
+      let actualDateStr = dateStr;
+      if (dateStr.length === 10 && dateStr.includes('-')) {
+        actualDateStr = `${dateStr}T00:00:00`;
+      }
+
+      const date = new Date(actualDateStr);
 
       // Se a data termina com Z (UTC), extrai os componentes UTC
       if (dateStr.endsWith('Z')) {
@@ -81,7 +86,7 @@ export const AppointmentExecute: React.FC = () => {
         return format(localDate, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
       }
 
-      // Para datas sem Z, usa normalmente
+      // Para datas sem Z (incluindo as que agora têm T00:00:00), usa normalmente
       return format(date, "d 'de' MMMM 'de' yyyy", { locale: ptBR });
 
     } catch (e) {
