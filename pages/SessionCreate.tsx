@@ -23,6 +23,7 @@ export const SessionCreate: React.FC = () => {
   const isEditing = !!id;
 
   const [loading, setLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([]);
 
@@ -264,6 +265,21 @@ export const SessionCreate: React.FC = () => {
       alert('Erro ao salvar sessão. Verifique os dados e tente novamente.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleCancelSession = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      await sessionService.cancelSession(id);
+      navigate('/sessions');
+    } catch (error) {
+      console.error('Failed to cancel session', error);
+      alert('Erro ao cancelar a sessão. Tente novamente.');
+    } finally {
+      setLoading(false);
+      setShowCancelModal(false);
     }
   };
 
@@ -591,14 +607,24 @@ export const SessionCreate: React.FC = () => {
 
 
 
-          <div className="mt-8 flex justify-end gap-4 border-t border-border-light dark:border-border-dark pt-6">
+          <div className="mt-8 flex flex-wrap justify-end gap-4 border-t border-border-light dark:border-border-dark pt-6">
             <button
               type="button"
               onClick={() => navigate(-1)}
               className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/10"
             >
-              <span className="truncate">Cancelar</span>
+              <span className="truncate">Voltar</span>
             </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(true)}
+                className="flex min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-red-500/20 transition-all"
+              >
+                <Icon name="cancel" />
+                <span className="truncate">Cancelar Sessão</span>
+              </button>
+            )}
             <button
               type="submit"
               disabled={loading}
@@ -609,6 +635,39 @@ export const SessionCreate: React.FC = () => {
           </div>
         </div>
       </form >
+
+      {/* Modal de Cancelamento de Sessão */}
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-surface-light dark:bg-surface-dark p-6 shadow-xl border border-border-light dark:border-border-dark animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-red-500 mb-4">
+              <Icon name="warning" className="text-3xl" />
+              <h3 className="text-xl font-bold">Cancelar Sessão</h3>
+            </div>
+            <p className="text-subtle-light dark:text-subtle-dark mb-6">
+              Tem certeza que deseja cancelar esta sessão? Todos os atendimentos que estão <strong>pendentes</strong> serão cancelados. Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg font-bold text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark hover:bg-primary/10 transition-colors"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelSession}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {loading ? 'Cancelando...' : 'Sim, Cancelar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div >
   );
 };
