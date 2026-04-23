@@ -137,7 +137,8 @@ export const Agenda: React.FC = () => {
         }
 
         const data = await getAppointments(startDate, endDate);
-        setAppointments(data);
+        // Filtra os atendimentos para não exibir os cancelados
+        setAppointments(data.filter((app: Appointment) => app.status !== 'Cancelado'));
       } catch (err) {
         console.error('Error loading appointments:', err);
         setError('Erro ao carregar os agendamentos. Tente novamente mais tarde.');

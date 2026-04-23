@@ -308,16 +308,17 @@ export const SessionCreate: React.FC = () => {
               <div className="flex p-1 bg-background-light dark:bg-background-dark rounded-xl border border-border-light dark:border-border-dark w-full sm:w-fit">
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: AppointmentCategory.PRIVATE, health_plan_id: '' }))}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.PRIVATE ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
+                  onClick={() => !isEditing && setFormData(prev => ({ ...prev, category: AppointmentCategory.PRIVATE, health_plan_id: '' }))}
+                  disabled={isEditing}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.PRIVATE ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'} ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                 >
                   <Icon name="person" />
                   Atendimento Privado
                 </button>
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: AppointmentCategory.CLINIC }))}
-                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.CLINIC ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'}`}
+                  onClick={() => !isEditing && setFormData(prev => ({ ...prev, category: AppointmentCategory.CLINIC }))}
+                  className={`flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${formData.category === AppointmentCategory.CLINIC ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'} ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                   disabled={isEditing}
                 >
                   <Icon name="domain" />
@@ -345,7 +346,8 @@ export const SessionCreate: React.FC = () => {
                       name="health_plan_id"
                       value={formData.health_plan_id}
                       onChange={handleChange}
-                      className="form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                      disabled={isEditing}
+                      className={`form-select flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                     >
                       <option value="">Selecione o plano</option>
                       {(Array.isArray(healthPlans) ? healthPlans : []).map(plan => (
@@ -411,7 +413,8 @@ export const SessionCreate: React.FC = () => {
                   value={formData.total_appointments}
                   onChange={handleChange}
                   required
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                  disabled={isEditing}
+                  className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                   placeholder="Ex: 10"
                   type="number"
                   min="1"
@@ -427,8 +430,8 @@ export const SessionCreate: React.FC = () => {
                   value={formData.total_value}
                   onChange={handleChange}
                   required={!formData.health_plan_id}
-                  disabled={!!formData.health_plan_id}
-                  className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${formData.health_plan_id ? 'opacity-60 cursor-not-allowed bg-background-light/50 dark:bg-background-dark/50' : ''}`}
+                  disabled={!!formData.health_plan_id || isEditing}
+                  className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${(formData.health_plan_id || isEditing) ? 'opacity-60 cursor-not-allowed bg-background-light/50 dark:bg-background-dark/50' : ''}`}
                   placeholder="0.00"
                   type="text"
                 />
@@ -443,7 +446,8 @@ export const SessionCreate: React.FC = () => {
                   value={formData.start_date}
                   onChange={handleChange}
                   required
-                  className="form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                  disabled={isEditing}
+                  className={`form-input flex w-full min-w-0 flex-1 resize-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                   type="date"
                 />
               </label>
@@ -478,7 +482,8 @@ export const SessionCreate: React.FC = () => {
                       <select
                         value={slot.day_of_week}
                         onChange={(e) => handleScheduleChange(i, 'day_of_week', e.target.value)}
-                        className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                        disabled={isEditing}
+                        className={`form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
                         {DAYS_OF_WEEK.map(day => (
                           <option key={day} value={day}>{day}</option>
@@ -489,7 +494,8 @@ export const SessionCreate: React.FC = () => {
                       <select
                         value={slot.time}
                         onChange={(e) => handleScheduleChange(i, 'time', e.target.value)}
-                        className="form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base"
+                        disabled={isEditing}
+                        className={`form-select flex w-full min-w-0 flex-1 resize-none appearance-none overflow-hidden rounded-lg text-text-light dark:text-text-dark focus:outline-0 focus:ring-2 focus:ring-primary/50 border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark h-12 px-4 text-base ${isEditing ? 'opacity-60 cursor-not-allowed' : ''}`}
                       >
                         {Array.isArray(hours) && hours.map(hour => (
                           <option key={hour} value={hour}>{hour}</option>
@@ -499,8 +505,8 @@ export const SessionCreate: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => removeSchedule(i)}
-                      disabled={formData.schedules.length <= 1}
-                      className="flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-transparent text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-30"
+                      disabled={formData.schedules.length <= 1 || isEditing}
+                      className="flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-transparent text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-30 disabled:cursor-not-allowed"
                     >
                       <Icon name="delete" className="text-red-500" />
                     </button>
@@ -509,7 +515,8 @@ export const SessionCreate: React.FC = () => {
                 <button
                   type="button"
                   onClick={addSchedule}
-                  className="flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-4 bg-primary/20 dark:bg-primary/30 text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/30"
+                  disabled={isEditing}
+                  className={`flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-4 bg-primary/20 dark:bg-primary/30 text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/30 ${isEditing ? 'opacity-50 cursor-not-allowed' : ''}`}
                 >
                   <Icon name="add" />
                   <span className="truncate">Adicionar Horário</span>
