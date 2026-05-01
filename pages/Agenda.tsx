@@ -20,7 +20,7 @@ export const hours = [
 export const Agenda: React.FC = () => {
   const navigate = useNavigate();
   const [viewDate, setViewDate] = useState(new Date());
-  const [currentView, setCurrentView] = useState<'Semana' | 'Mês'>('Semana');
+  const [currentView, setCurrentView] = useState<'Dia' | 'Semana' | 'Mês'>('Semana');
   const [appointments, setAppointments] = useState<Appointment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -94,7 +94,9 @@ export const Agenda: React.FC = () => {
   // Navigation
   const changeDate = (amount: number) => {
     const newDate = new Date(viewDate);
-    if (currentView === 'Semana') {
+    if (currentView === 'Dia') {
+      newDate.setDate(viewDate.getDate() + amount);
+    } else if (currentView === 'Semana') {
       newDate.setDate(viewDate.getDate() + amount * 7);
     } else {
       newDate.setMonth(viewDate.getMonth() + amount);
@@ -104,6 +106,7 @@ export const Agenda: React.FC = () => {
 
   const handleToday = () => {
     setViewDate(new Date());
+    setCurrentView('Dia');
   };
 
 
@@ -117,7 +120,12 @@ export const Agenda: React.FC = () => {
         let startDate: Date;
         let endDate: Date;
 
-        if (currentView === 'Semana') {
+        if (currentView === 'Dia') {
+          startDate = new Date(viewDate);
+          startDate.setHours(0, 0, 0, 0);
+          endDate = new Date(viewDate);
+          endDate.setHours(23, 59, 59, 999);
+        } else if (currentView === 'Semana') {
           startDate = startOfWeek(viewDate, { weekStartsOn: 1 });
           endDate = endOfWeek(viewDate, { weekStartsOn: 1 });
         } else {
@@ -137,7 +145,8 @@ export const Agenda: React.FC = () => {
         }
 
         const data = await getAppointments(startDate, endDate);
-        setAppointments(data);
+        // Filtra os atendimentos para não exibir os cancelados
+        setAppointments(data.filter((app: Appointment) => app.status !== 'Cancelado'));
       } catch (err) {
         console.error('Error loading appointments:', err);
         setError('Erro ao carregar os agendamentos. Tente novamente mais tarde.');
@@ -177,6 +186,75 @@ export const Agenda: React.FC = () => {
 
 
   // --- Renderers ---
+
+  const renderDailyView = () => (
+    <div className="flex-1 overflow-auto">
+      <div className="min-w-full">
+        {/* Header da Grade Diária */}
+        <div className="grid grid-cols-[100px_1fr] sticky top-0 bg-surface-light dark:bg-surface-dark z-20 shadow-sm border-b border-border-light dark:border-border-dark">
+          <div className="p-4 border-r border-border-light dark:border-border-dark flex items-center justify-center text-subtle-light dark:text-subtle-dark font-medium text-xs uppercase tracking-wider">
+            Horário
+          </div>
+          <div className={`p-3 text-center ${isToday(viewDate) ? 'bg-primary/5' : ''}`}>
+            <p className="text-xs font-semibold text-subtle-light dark:text-subtle-dark uppercase">{format(viewDate, 'EEEE', { locale: ptBR })}</p>
+            <p className={`text-xl font-black ${isToday(viewDate) ? 'text-primary' : 'text-text-light dark:text-text-dark'}`}>{viewDate.getDate()}</p>
+          </div>
+        </div>
+
+        {/* Conteúdo da Grade Diária */}
+        <div className="bg-background-light/20 dark:bg-background-dark/20">
+          {hours.map((hour) => {
+            const apps = getAppointmentsForDate(viewDate, hour);
+            const hasClinic = apps.some(a => a.category === AppointmentCategory.CLINIC || a.category === 'clinic');
+
+            return (
+              <div key={hour} className="grid grid-cols-[100px_1fr] min-h-[100px] border-b border-border-light dark:border-border-dark last:border-b-0">
+                <div className="p-2 border-r border-border-light dark:border-border-dark flex items-start justify-center text-xs font-bold text-subtle-light dark:text-subtle-dark">
+                  {hour}
+                </div>
+                <div className="relative p-2 group">
+                  {apps.length > 0 ? (
+                    <div className={`h-full w-full ${hasClinic ? 'grid grid-cols-2 gap-2' : 'flex flex-col gap-2'}`}>
+                      {apps.map((app) => (
+                        <div
+                          key={app.id}
+                          onClick={() => navigate(`/appointments/${app.id}`)}
+                          className={`rounded-xl p-3 text-xs leading-tight cursor-pointer shadow-md border-2 transition-all hover:scale-[1.01] hover:shadow-lg flex flex-col justify-between ${app.color} h-full`}
+                          title={`${app.time || app.scheduled_time} - ${app.patient_name}`}
+                        >
+                          <div>
+                            <div className="font-black text-sm mb-1">{app.patient_name}</div>
+                            <div className="opacity-80 font-medium">{app.type}</div>
+                          </div>
+                          <div className="flex justify-between items-center mt-2">
+                            <div className="flex items-center gap-1 opacity-70">
+                              <Icon name="schedule" className="text-[12px]" />
+                              <span className="font-bold">{app.scheduled_time?.substring(0, 5)}</span>
+                            </div>
+                            <Icon name={(app.category === AppointmentCategory.CLINIC || app.category === 'clinic') ? 'domain' : 'person'} className="text-[14px]" />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="w-full h-full opacity-0 group-hover:opacity-100 flex items-center justify-start transition-opacity">
+                      <button
+                        onClick={() => navigate(`/appointments/new?date=${formatDateISO(viewDate)}&time=${hour}`)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 text-primary hover:bg-primary/20 transition-all border border-primary/20"
+                      >
+                        <Icon name="add" className="text-sm" />
+                        <span className="text-xs font-bold">Agendar {hour}</span>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
 
   const renderWeeklyView = () => (
     <div className="flex-1 overflow-auto">
@@ -337,6 +415,15 @@ export const Agenda: React.FC = () => {
             {/* View toggle */}
             <div className="flex bg-surface-light dark:bg-surface-dark rounded-lg p-1 border border-border-light dark:border-border-dark">
               <button
+                onClick={() => setCurrentView('Dia')}
+                className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${currentView === 'Dia'
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'text-text-light dark:text-text-dark hover:bg-background-light dark:hover:bg-background-dark'
+                  }`}
+              >
+                Dia
+              </button>
+              <button
                 onClick={() => setCurrentView('Semana')}
                 className={`px-4 py-2 text-sm font-medium rounded-md transition-colors ${currentView === 'Semana'
                   ? 'bg-primary text-white shadow-sm'
@@ -380,9 +467,11 @@ export const Agenda: React.FC = () => {
                 <Icon name="chevron_right" className="rotate-180" />
               </button>
               <span className="text-lg font-bold text-text-light dark:text-text-dark capitalize">
-                {currentView === 'Mês'
-                  ? format(viewDate, 'MMMM yyyy', { locale: ptBR })
-                  : `Semana de ${format(startOfWeek(viewDate, { weekStartsOn: 1 }), 'dd/MM', { locale: ptBR })}`
+                {currentView === 'Dia'
+                  ? format(viewDate, "EEEE, dd 'de' MMMM", { locale: ptBR })
+                  : currentView === 'Mês'
+                    ? format(viewDate, 'MMMM yyyy', { locale: ptBR })
+                    : `Semana de ${format(startOfWeek(viewDate, { weekStartsOn: 1 }), 'dd/MM', { locale: ptBR })}`
                 }
               </span>
               <button
@@ -412,7 +501,7 @@ export const Agenda: React.FC = () => {
 
           {isLoading
             ? <div className="flex-1 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary"></div></div>
-            : (currentView === 'Semana' ? renderWeeklyView() : renderMonthlyView())
+            : (currentView === 'Dia' ? renderDailyView() : currentView === 'Semana' ? renderWeeklyView() : renderMonthlyView())
           }
         </div>
       </div>
