@@ -255,7 +255,7 @@ export const PatientDetail: React.FC = () => {
                 </button>
               </div>
               <button
-                onClick={() => navigate('/sessions/new')}
+                onClick={() => navigate('/sessions/new', { state: { patientId: id } })}
                 className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark gap-2 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-opacity-90 transition-colors"
               >
                 <Icon name="add" />
