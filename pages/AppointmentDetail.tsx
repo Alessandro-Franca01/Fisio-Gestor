@@ -27,7 +27,7 @@ export const AppointmentDetail: React.FC = () => {
         fetchAppointment();
     }, [id]);
 
-    const handleStatusChange = async (newStatus: 'Confirmado' | 'Cancelado' | 'Pendente') => {
+    const handleStatusChange = async (newStatus: 'Confirmado' | 'Cancelado' | 'Pendente' | 'Faltou') => {
         if (!id) return;
         try {
             await updateAppointmentStatus(id, newStatus);
@@ -59,6 +59,7 @@ export const AppointmentDetail: React.FC = () => {
 
     const isDone = appointment.status === 'Realizado';
     const isCanceled = appointment.status === 'Cancelado';
+    const isNoShow = appointment.status === 'Faltou';
 
     return (
         <div className="mx-auto max-w-5xl">
@@ -80,6 +81,7 @@ export const AppointmentDetail: React.FC = () => {
                               ${appointment.status === 'Agendado' || appointment.status === 'Confirmado' ? 'bg-blue-100 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300' : ''}
                               ${appointment.status === 'Pendente' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-300' : ''}
                               ${appointment.status === 'Cancelado' ? 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-300' : ''}
+                              ${appointment.status === 'Faltou' ? 'bg-orange-100 dark:bg-orange-900/50 text-orange-800 dark:text-orange-300' : ''}
                           `}>
                             {appointment.status}
                         </span>
@@ -89,7 +91,7 @@ export const AppointmentDetail: React.FC = () => {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    {!isDone && !isCanceled && (
+                    {!isDone && !isCanceled && !isNoShow && (
                         <button
                             onClick={() => navigate(`/appointments/${appointment.id}/execute`)}
                             className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold shadow-sm hover:opacity-90 transition-colors"
@@ -211,6 +213,14 @@ export const AppointmentDetail: React.FC = () => {
             {/* Actions Footer */}
             {!isDone && (
                 <div className="flex justify-end gap-3 pt-4 border-t border-border-light dark:border-border-dark">
+                    {!isCanceled && appointment.status !== 'Faltou' && (
+                        <button
+                            onClick={() => handleStatusChange('Faltou')}
+                            className="px-4 py-2 text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded-lg font-medium transition-colors"
+                        >
+                            Registrar Falta
+                        </button>
+                    )}
                     {!isCanceled && (
                         <button
                             onClick={() => handleStatusChange('Cancelado')}

@@ -11,13 +11,18 @@ export const PatientList: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState<string>('');
   const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
   const debounceRef = useRef<number | null>(null);
 
-  const loadPatients = async (pageToLoad = 1, searchQuery = search) => {
+  const loadPatients = async (pageToLoad = 1, searchQuery = search, limit = perPage) => {
     setIsLoading(true);
     setError(null);
     try {
-      const params = { page: pageToLoad, ...(searchQuery ? { search: searchQuery } : {}) };
+      const params = { 
+        page: pageToLoad, 
+        per_page: limit,
+        ...(searchQuery ? { search: searchQuery } : {}) 
+      };
       const response = await getPatients(params);
       setPatients(response.data || []);
       setPagination(response);
@@ -43,8 +48,7 @@ export const PatientList: React.FC = () => {
     // debounce search
     if (debounceRef.current) window.clearTimeout(debounceRef.current);
     debounceRef.current = window.setTimeout(() => {
-      setPage(1);
-      loadPatients(1, search);
+      loadPatients(1, search, perPage);
     }, 300) as unknown as number;
 
     return () => {
@@ -52,6 +56,11 @@ export const PatientList: React.FC = () => {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
+
+  useEffect(() => {
+    loadPatients(1, search, perPage);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [perPage]);
 
   return (
     <div className="mx-auto max-w-4xl">
@@ -130,64 +139,95 @@ export const PatientList: React.FC = () => {
       </div>
 
       {/* Pagination Controls */}
-      {pagination && pagination.last_page > 1 && (
-        <div className="flex items-center justify-between border-t border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-3 sm:px-6 mt-4 rounded-lg">
-          <div className="flex flex-1 justify-between sm:hidden">
+      {pagination && (
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-t border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-4 sm:px-6 mt-4 rounded-xl shadow-sm">
+          <div className="flex items-center gap-4">
+            <p className="text-sm text-subtle-light dark:text-subtle-dark">
+              Mostrando <span className="font-semibold text-text-light dark:text-text-dark">{pagination.from || 0}</span> até <span className="font-semibold text-text-light dark:text-text-dark">{pagination.to || 0}</span> de{' '}
+              <span className="font-semibold text-text-light dark:text-text-dark">{pagination.total}</span> pacientes
+            </p>
+            <div className="hidden sm:block h-4 w-px bg-border-light dark:bg-border-dark"></div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-subtle-light dark:text-subtle-dark">Por página:</span>
+              <select 
+                value={perPage} 
+                onChange={(e) => setPerPage(Number(e.target.value))}
+                className="bg-transparent border border-border-light dark:border-border-dark rounded px-2 py-1 text-sm text-text-light dark:text-text-dark focus:ring-1 focus:ring-primary outline-none"
+              >
+                <option value={5}>5</option>
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+          
+          <nav className="flex items-center justify-center gap-1" aria-label="Pagination">
             <button
               onClick={() => loadPatients(page - 1)}
               disabled={page === 1}
-              className="relative inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-light dark:border-border-dark text-subtle-light dark:text-subtle-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+              title="Anterior"
             >
-              Anterior
+              <Icon name="chevron_left" className="text-xl" />
             </button>
+
+            <div className="flex items-center gap-1">
+              {(() => {
+                const totalPages = pagination.last_page;
+                const current = page;
+                const delta = 1;
+                const range = [];
+                const rangeWithDots = [];
+                let l;
+
+                for (let i = 1; i <= totalPages; i++) {
+                  if (i === 1 || i === totalPages || (i >= current - delta && i <= current + delta)) {
+                    range.push(i);
+                  }
+                }
+
+                for (const i of range) {
+                  if (l) {
+                    if (i - l === 2) {
+                      rangeWithDots.push(l + 1);
+                    } else if (i - l !== 1) {
+                      rangeWithDots.push('...');
+                    }
+                  }
+                  rangeWithDots.push(i);
+                  l = i;
+                }
+
+                return rangeWithDots.map((p, index) => (
+                  p === '...' ? (
+                    <span key={`dots-${index}`} className="px-2 text-subtle-light dark:text-subtle-dark">...</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => loadPatients(Number(p))}
+                      className={`flex h-9 min-w-[36px] items-center justify-center rounded-lg px-2 text-sm font-bold transition-all ${
+                        p === page
+                        ? 'bg-primary text-white shadow-md shadow-primary/20'
+                        : 'text-text-light dark:text-text-dark hover:bg-gray-50 dark:hover:bg-gray-800 border border-transparent hover:border-border-light dark:hover:border-border-dark'
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  )
+                ));
+              })()}
+            </div>
+
             <button
               onClick={() => loadPatients(page + 1)}
               disabled={page === pagination.last_page}
-              className="relative ml-3 inline-flex items-center rounded-md border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark px-4 py-2 text-sm font-medium text-text-light dark:text-text-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-50"
+              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-light dark:border-border-dark text-subtle-light dark:text-subtle-dark hover:bg-gray-50 dark:hover:bg-gray-800 disabled:opacity-30 transition-colors"
+              title="Próximo"
             >
-              Próximo
+              <Icon name="chevron_right" className="text-xl" />
             </button>
-          </div>
-          <div className="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm text-subtle-light dark:text-subtle-dark">
-                Mostrando <span className="font-medium">{pagination.from}</span> até <span className="font-medium">{pagination.to}</span> de{' '}
-                <span className="font-medium">{pagination.total}</span> resultados
-              </p>
-            </div>
-            <div>
-              <nav className="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
-                <button
-                  onClick={() => loadPatients(page - 1)}
-                  disabled={page === 1}
-                  className="relative inline-flex items-center rounded-l-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <span className="sr-only">Anterior</span>
-                  <Icon name="chevron_left" className="h-5 w-5" />
-                </button>
-                {Array.from({ length: pagination.last_page }, (_, i) => i + 1).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => loadPatients(p)}
-                    className={`relative inline-flex items-center px-4 py-2 text-sm font-semibold ${p === page
-                      ? 'z-10 bg-primary text-white focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary'
-                      : 'text-text-light dark:text-text-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0'
-                      }`}
-                  >
-                    {p}
-                  </button>
-                ))}
-                <button
-                  onClick={() => loadPatients(page + 1)}
-                  disabled={page === pagination.last_page}
-                  className="relative inline-flex items-center rounded-r-md px-2 py-2 text-subtle-light dark:text-subtle-dark ring-1 ring-inset ring-border-light dark:ring-border-dark hover:bg-gray-50 dark:hover:bg-gray-800 focus:z-20 focus:outline-offset-0 disabled:opacity-50"
-                >
-                  <span className="sr-only">Próximo</span>
-                  <Icon name="chevron_right" className="h-5 w-5" />
-                </button>
-              </nav>
-            </div>
-          </div>
+          </nav>
         </div>
       )}
     </div>

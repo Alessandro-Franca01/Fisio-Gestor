@@ -76,10 +76,21 @@ export const deleteSession = async (id: string | number) => {
     }
 };
 
+export const cancelSession = async (id: string | number) => {
+    try {
+        const response = await api.post(`/sessions/${id}/cancel`);
+        return response.data;
+    } catch (error) {
+        console.error('Error canceling session:', error);
+        throw error;
+    }
+};
+
 export default {
     getSessions,
     getSessionById,
     createSession,
     updateSession,
     deleteSession,
+    cancelSession,
 };

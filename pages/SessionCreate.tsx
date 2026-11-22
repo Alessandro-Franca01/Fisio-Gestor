@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { Field, SelectField, TextAreaField, TextField, inputClass } from '../components/form';
 import { ScheduleEditor } from '../components/session/ScheduleEditor';
@@ -27,8 +27,8 @@ interface SessionForm {
 
 const DEFAULT_SLOT: ScheduleSlot = { day_of_week: 'Segunda-feira', time: '09:00' };
 
-const initialForm = (): SessionForm => ({
-  patient_id: '',
+const initialForm = (patientId = ''): SessionForm => ({
+  patient_id: patientId,
   title: '',
   total_appointments: '',
   total_value: '',
@@ -40,20 +40,23 @@ const initialForm = (): SessionForm => ({
   health_plan_id: '',
 });
 
-const categoryButtonClass = (active: boolean) =>
+const categoryButtonClass = (active: boolean, locked: boolean) =>
   `flex items-center gap-2 px-6 py-3 rounded-lg text-sm font-bold transition-all ${
     active ? 'bg-primary text-background-dark shadow-md' : 'text-subtle-light dark:text-subtle-dark hover:bg-primary/10'
-  }`;
+  } ${locked ? 'opacity-60 cursor-not-allowed' : ''}`;
 
 export const SessionCreate: React.FC = () => {
   const navigate = useNavigate();
   const { id } = useParams();
+  const location = useLocation();
   const isEditing = !!id;
+  const prefilledPatientId = location.state?.patientId?.toString() || '';
 
   const [loading, setLoading] = useState(false);
+  const [showCancelModal, setShowCancelModal] = useState(false);
   const [patients, setPatients] = useState<Patient[]>([]);
   const [healthPlans, setHealthPlans] = useState<HealthPlan[]>([]);
-  const [formData, setFormData] = useState<SessionForm>(initialForm);
+  const [formData, setFormData] = useState<SessionForm>(() => initialForm(prefilledPatientId));
 
   // Pagamento
   const [isPaid, setIsPaid] = useState(false);
@@ -178,6 +181,21 @@ export const SessionCreate: React.FC = () => {
     }
   };
 
+  const handleCancelSession = async () => {
+    if (!id) return;
+    setLoading(true);
+    try {
+      await sessionService.cancelSession(id);
+      navigate('/sessions');
+    } catch (error) {
+      console.error('Failed to cancel session', error);
+      alert('Erro ao cancelar a sessão. Tente novamente.');
+    } finally {
+      setLoading(false);
+      setShowCancelModal(false);
+    }
+  };
+
   const primaryButton =
     'flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-[0.015em] hover:opacity-90 disabled:opacity-50';
   const isClinic = formData.category === AppointmentCategory.CLINIC;
@@ -201,16 +219,17 @@ export const SessionCreate: React.FC = () => {
               <div className="flex p-1 bg-background-light dark:bg-background-dark rounded-xl border border-border-light dark:border-border-dark w-full sm:w-fit">
                 <button
                   type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, category: AppointmentCategory.PRIVATE, health_plan_id: '' }))}
-                  className={categoryButtonClass(!isClinic)}
+                  onClick={() => !isEditing && setFormData(prev => ({ ...prev, category: AppointmentCategory.PRIVATE, health_plan_id: '' }))}
+                  disabled={isEditing}
+                  className={categoryButtonClass(!isClinic, isEditing)}
                 >
                   <Icon name="person" />
                   Atendimento Privado
                 </button>
                 <button
                   type="button"
-                  onClick={() => set('category')(AppointmentCategory.CLINIC)}
-                  className={categoryButtonClass(isClinic)}
+                  onClick={() => !isEditing && set('category')(AppointmentCategory.CLINIC)}
+                  className={categoryButtonClass(isClinic, isEditing)}
                   disabled={isEditing}
                 >
                   <Icon name="domain" />
@@ -233,6 +252,7 @@ export const SessionCreate: React.FC = () => {
                 <SelectField
                   label="Nome do Convênio"
                   placeholder="Selecione o plano"
+                  disabled={isEditing}
                   value={formData.health_plan_id}
                   onChange={set('health_plan_id')}
                   options={healthPlans.filter(Boolean).map(p => ({ value: String(p.id), label: p.name }))}
@@ -275,6 +295,7 @@ export const SessionCreate: React.FC = () => {
               type="number"
               min="1"
               required
+              disabled={isEditing}
               value={formData.total_appointments}
               onChange={set('total_appointments')}
               placeholder="Ex: 10"
@@ -283,7 +304,7 @@ export const SessionCreate: React.FC = () => {
             <TextField
               label="Valor Total (R$)"
               required={!formData.health_plan_id}
-              disabled={!!formData.health_plan_id}
+              disabled={!!formData.health_plan_id || isEditing}
               value={formData.total_value}
               onChange={set('total_value')}
               placeholder="0.00"
@@ -294,12 +315,13 @@ export const SessionCreate: React.FC = () => {
               className="md:col-span-2"
               type="date"
               required
+              disabled={isEditing}
               value={formData.start_date}
               onChange={set('start_date')}
             />
 
             <div className="md:col-span-2">
-              <ScheduleEditor schedules={formData.schedules} hours={Array.isArray(hours) ? hours : []} onChange={set('schedules')} />
+              <ScheduleEditor disabled={isEditing} schedules={formData.schedules} hours={Array.isArray(hours) ? hours : []} onChange={set('schedules')} />
             </div>
 
             <TextAreaField
@@ -323,20 +345,62 @@ export const SessionCreate: React.FC = () => {
             />
           )}
 
-          <div className="mt-8 flex justify-end gap-4 border-t border-border-light dark:border-border-dark pt-6">
+          <div className="mt-8 flex flex-wrap justify-end gap-4 border-t border-border-light dark:border-border-dark pt-6">
             <button
               type="button"
               onClick={() => navigate(-1)}
               className="flex min-w-[84px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/10"
             >
-              <span className="truncate">Cancelar</span>
+              <span className="truncate">Voltar</span>
             </button>
+            {isEditing && (
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(true)}
+                className="flex min-w-[84px] cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20 text-sm font-bold leading-normal tracking-[0.015em] hover:bg-red-500/20 transition-all"
+              >
+                <Icon name="cancel" />
+                <span className="truncate">Cancelar Sessão</span>
+              </button>
+            )}
             <button type="submit" disabled={loading} className={primaryButton}>
               <span className="truncate">{loading ? 'Salvando...' : 'Salvar Sessão'}</span>
             </button>
           </div>
         </div>
       </form>
+
+      {showCancelModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-surface-light dark:bg-surface-dark p-6 shadow-xl border border-border-light dark:border-border-dark animate-in zoom-in-95">
+            <div className="flex items-center gap-3 text-red-500 mb-4">
+              <Icon name="warning" className="text-3xl" />
+              <h3 className="text-xl font-bold">Cancelar Sessão</h3>
+            </div>
+            <p className="text-subtle-light dark:text-subtle-dark mb-6">
+              Tem certeza que deseja cancelar esta sessão? Todos os atendimentos que estão <strong>pendentes</strong> serão cancelados. Esta ação não pode ser desfeita.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelModal(false)}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg font-bold text-text-light dark:text-text-dark bg-background-light dark:bg-background-dark hover:bg-primary/10 transition-colors"
+              >
+                Voltar
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelSession}
+                disabled={loading}
+                className="px-4 py-2 rounded-lg font-bold text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+              >
+                {loading ? 'Cancelando...' : 'Sim, Cancelar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

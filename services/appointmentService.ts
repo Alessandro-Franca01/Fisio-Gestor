@@ -158,7 +158,7 @@ export const updateAppointment = async (id: string | number, payload: any) => {
 
 export const updateAppointmentStatus = async (
   id: string,
-  status: 'Confirmado' | 'Cancelado' | 'Pendente'
+  status: 'Confirmado' | 'Cancelado' | 'Pendente' | 'Faltou'
 ): Promise<any> => {
   try {
     const response = await api.patch(`/appointments/${id}/status`, { status });

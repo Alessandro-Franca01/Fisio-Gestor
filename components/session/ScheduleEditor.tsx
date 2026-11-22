@@ -7,9 +7,10 @@ interface Props {
   schedules: ScheduleSlot[];
   hours: string[];
   onChange: (schedules: ScheduleSlot[]) => void;
+  disabled?: boolean;
 }
 
-export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange }) => {
+export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange, disabled = false }) => {
   const update = (index: number, field: keyof ScheduleSlot, value: string) =>
     onChange(schedules.map((s, i) => (i === index ? { ...s, [field]: value } : s)));
 
@@ -26,7 +27,7 @@ export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange }) 
         {schedules.map((slot, i) => (
           <div key={i} className="flex items-end gap-4">
             <label className="flex flex-col min-w-40 flex-1">
-              <select value={slot.day_of_week} onChange={e => update(i, 'day_of_week', e.target.value)} className={selectClass}>
+              <select value={slot.day_of_week} onChange={e => update(i, 'day_of_week', e.target.value)} disabled={disabled} className={selectClass}>
                 {DAYS_OF_WEEK.map(day => (
                   <option key={day} value={day}>
                     {day}
@@ -35,7 +36,7 @@ export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange }) 
               </select>
             </label>
             <label className="flex flex-col min-w-32 flex-none">
-              <select value={slot.time} onChange={e => update(i, 'time', e.target.value)} className={selectClass}>
+              <select value={slot.time} onChange={e => update(i, 'time', e.target.value)} disabled={disabled} className={selectClass}>
                 {hours.map(hour => (
                   <option key={hour} value={hour}>
                     {hour}
@@ -46,7 +47,7 @@ export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange }) 
             <button
               type="button"
               onClick={() => remove(i)}
-              disabled={schedules.length <= 1}
+              disabled={schedules.length <= 1 || disabled}
               className="flex size-12 cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-transparent text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-30"
             >
               <Icon name="delete" className="text-red-500" />
@@ -56,7 +57,8 @@ export const ScheduleEditor: React.FC<Props> = ({ schedules, hours, onChange }) 
         <button
           type="button"
           onClick={add}
-          className="flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-4 bg-primary/20 dark:bg-primary/30 text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/30"
+          disabled={disabled}
+          className="flex w-full cursor-pointer items-center justify-center gap-2 overflow-hidden rounded-lg h-12 px-4 bg-primary/20 dark:bg-primary/30 text-text-light dark:text-text-dark text-sm font-bold leading-normal tracking-[0.015em] hover:bg-primary/30 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Icon name="add" />
           <span className="truncate">Adicionar Horário</span>
