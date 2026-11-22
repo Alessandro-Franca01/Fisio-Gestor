@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Icon } from '../components/Icon';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAppointmentById, executeAppointment } from '../services/appointmentService';
+import { AppointmentAttachments } from '../components/attachments/AppointmentAttachments';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -197,22 +198,10 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
-            {/* Anexar Foto */}
+            {/* Fotos do atendimento (storage MinIO) */}
             <div>
-              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Anexar Foto (Opcional)</h3>
-              <div className="mt-5 flex justify-center rounded-lg border-2 border-dashed border-border-light dark:border-border-dark px-6 py-10">
-                <div className="text-center">
-                  <Icon name="upload_file" className="text-5xl text-subtle-light dark:text-subtle-dark" />
-                  <div className="mt-4 flex text-sm leading-6 text-subtle-light dark:text-subtle-dark">
-                    <label className="relative cursor-pointer rounded-md font-semibold text-primary hover:underline">
-                      <span>Clique para selecionar</span>
-                      <input type="file" className="sr-only" />
-                    </label>
-                    <p className="pl-1">ou arraste um arquivo</p>
-                  </div>
-                  <p className="text-xs leading-5 text-subtle-light dark:text-subtle-dark">PNG, JPG, GIF até 10MB</p>
-                </div>
-              </div>
+              <h3 className="text-text-light dark:text-text-dark text-lg font-bold leading-tight pb-3 border-b border-border-light dark:border-border-dark">Fotos do Atendimento (Opcional)</h3>
+              {id && <AppointmentAttachments appointmentId={id} />}
             </div>
 
             {/* Observações */}
