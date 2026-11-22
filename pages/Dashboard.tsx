@@ -31,9 +31,7 @@ export const Dashboard: React.FC = () => {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        console.log('Fetching dashboard data...');
         const response = await api.get('/dashboard');
-        console.log('Dashboard data received:', response.data);
         setData(response.data);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
