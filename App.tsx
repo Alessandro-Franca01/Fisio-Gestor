@@ -15,6 +15,7 @@ import { Agenda } from './pages/Agenda';
 import { PatientCreate } from './pages/PatientCreate';
 import { SessionList } from './pages/SessionList';
 import { SessionDetail } from './pages/SessionDetail';
+import { SessionReportPage } from './pages/SessionReport';
 import { AssessmentCreate } from './pages/AssessmentCreate';
 import { AssessmentDetail } from './pages/AssessmentDetail';
 import { AssessmentList } from './pages/AssessmentList';
@@ -80,6 +81,7 @@ export default function App() {
           <Route path="/sessions/new" element={<SessionCreate />} />
           <Route path="/sessions/:id" element={<SessionDetail />} />
           <Route path="/sessions/:id/edit" element={<SessionCreate />} />
+          <Route path="/sessions/:id/report" element={<SessionReportPage />} />
 
           <Route path="/patient/:patientId/assessments" element={<AssessmentList />} />
           <Route path="/patient/:patientId/assessment/new" element={<AssessmentCreate />} />

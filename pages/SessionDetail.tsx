@@ -8,6 +8,24 @@ export const SessionDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
+    const [showReportModal, setShowReportModal] = useState(false);
+    const [reportComment, setReportComment] = useState('');
+    const [generating, setGenerating] = useState(false);
+    const [reportError, setReportError] = useState<string | null>(null);
+
+    const handleGenerateReport = async () => {
+        if (!id) return;
+        setGenerating(true);
+        setReportError(null);
+        try {
+            await sessionService.generateSessionReport(id, reportComment);
+            navigate(`/sessions/${id}/report`);
+        } catch (e: any) {
+            setReportError(e?.response?.data?.errors?.comment?.[0] || e?.response?.data?.message || 'Erro ao gerar o relatório.');
+        } finally {
+            setGenerating(false);
+        }
+    };
 
     useEffect(() => {
         const fetchSession = async () => {
@@ -45,6 +63,10 @@ export const SessionDetail: React.FC = () => {
     const completed = session.appointments?.filter(a => a.status === 'Realizado' || a.status === 'Faltou').length || 0;
     const total = session.total_appointments;
     const progress = (completed / total) * 100;
+    const OPEN_STATUSES = ['Agendado', 'Pendente', 'Confirmado'];
+    const canGenerateReport =
+        !!session.appointments?.length && !session.appointments.some(a => OPEN_STATUSES.includes(a.status));
+    const hasReport = !!session.report_generated_at;
 
     const totalValue = Number(session.total_value) || 0;
     const totalPaid = session.payments?.reduce((sum, p) => sum + parseFloat(p.amount), 0) || 0;
@@ -81,6 +103,30 @@ export const SessionDetail: React.FC = () => {
                         <Icon name="edit" />
                         <span className="truncate">Editar</span>
                     </button>
+                    {canGenerateReport && (
+                        <>
+                            {hasReport && (
+                                <button
+                                    onClick={() => navigate(`/sessions/${session.id}/report`)}
+                                    className="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-background-light dark:bg-background-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark text-sm font-bold shadow-sm hover:bg-primary/10 transition-colors"
+                                >
+                                    <Icon name="description" />
+                                    <span className="truncate">Ver Relatório</span>
+                                </button>
+                            )}
+                            <button
+                                onClick={() => {
+                                    setReportComment(session.report_comment ?? '');
+                                    setReportError(null);
+                                    setShowReportModal(true);
+                                }}
+                                className="flex items-center justify-center gap-2 rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold shadow-sm hover:opacity-90"
+                            >
+                                <Icon name="summarize" />
+                                <span className="truncate">{hasReport ? 'Gerar Novamente' : 'Gerar Relatório da Sessão'}</span>
+                            </button>
+                        </>
+                    )}
                     <button className="flex items-center justify-center gap-2 overflow-hidden rounded-lg h-10 px-4 bg-primary text-background-dark text-sm font-bold leading-normal tracking-wide shadow-sm hover:opacity-90">
                         <Icon name="add_circle" />
                         <span className="truncate">Agendar Atendimento</span>
@@ -201,6 +247,56 @@ export const SessionDetail: React.FC = () => {
                     </table>
                 </div>
             </div>
+
+            {showReportModal && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+                    onClick={() => !generating && setShowReportModal(false)}
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label="Gerar relatório da sessão"
+                >
+                    <div
+                        className="w-full max-w-lg rounded-xl bg-surface-light dark:bg-surface-dark p-6 shadow-xl"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <h3 className="text-lg font-bold text-text-light dark:text-text-dark">Gerar relatório da sessão</h3>
+                        <p className="mt-1 text-sm text-subtle-light dark:text-subtle-dark">
+                            Se quiser, adicione um comentário que será incluído no relatório.
+                        </p>
+                        <label className="mt-4 block text-sm font-medium text-text-light dark:text-text-dark" htmlFor="report-comment">
+                            Comentário (opcional)
+                        </label>
+                        <textarea
+                            id="report-comment"
+                            value={reportComment}
+                            onChange={e => setReportComment(e.target.value)}
+                            maxLength={5000}
+                            rows={6}
+                            autoFocus
+                            placeholder="Ex.: evolução geral do paciente, orientações, recomendações..."
+                            className="mt-1 w-full rounded-lg border border-border-light dark:border-border-dark bg-background-light dark:bg-background-dark p-3 text-sm text-text-light dark:text-text-dark focus:border-primary focus:outline-none"
+                        />
+                        {reportError && <p className="mt-2 text-sm text-red-600 dark:text-red-400">{reportError}</p>}
+                        <div className="mt-5 flex justify-end gap-3">
+                            <button
+                                onClick={() => setShowReportModal(false)}
+                                disabled={generating}
+                                className="h-10 rounded-lg border border-border-light dark:border-border-dark px-4 text-sm font-bold text-text-light dark:text-text-dark hover:bg-primary/10 disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={handleGenerateReport}
+                                disabled={generating}
+                                className="h-10 rounded-lg bg-primary px-4 text-sm font-bold text-background-dark hover:opacity-90 disabled:opacity-50"
+                            >
+                                {generating ? 'Gerando...' : 'Confirmar e gerar'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
