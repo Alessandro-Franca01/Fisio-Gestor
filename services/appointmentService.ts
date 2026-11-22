@@ -75,7 +75,7 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
         scheduled_time: time,
         type: appt.type || 'Fisioterapia',
         status: appt.status || 'Pendente',
-        color: getAppointmentColor(appt.type || 'Fisioterapia'),
+        color: getAppointmentColor(appt.category),
         category: (appt.category as 'private' | 'clinic') || 'private',
         room: appt.room,
         slot: 0,
@@ -94,15 +94,13 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
   } finally {
   }
 };
-const getAppointmentColor = (type: string): string => {
-  const colors: { [key: string]: string } = {
-    'Fisioterapia': 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300',
-    'Pilates': 'bg-green-100 dark:bg-green-900/40 border-l-4 border-green-500 text-green-700 dark:text-green-300',
-    'Avaliação': 'bg-purple-100 dark:bg-purple-900/40 border-l-4 border-purple-500 text-purple-700 dark:text-purple-300',
-    'Reabilitação': 'bg-orange-100 dark:bg-orange-900/40 border-l-4 border-orange-500 text-orange-700 dark:text-orange-300',
-  };
-
-  return colors[type] || 'bg-gray-100 dark:bg-gray-800 border-l-4 border-gray-400 text-gray-700 dark:text-gray-300';
+// A cor identifica a categoria (privado x clínica), não o tipo do atendimento.
+// Evita verde, que é a cor de sucesso/concluído no restante do sistema.
+const getAppointmentColor = (category?: string): string => {
+  if (category === 'clinic') {
+    return 'bg-violet-100 dark:bg-violet-900/40 border-l-4 border-violet-500 text-violet-700 dark:text-violet-300';
+  }
+  return 'bg-blue-100 dark:bg-blue-900/40 border-l-4 border-blue-500 text-blue-700 dark:text-blue-300';
 };
 
 export const generateWeekDays = (startDate: Date) => {
@@ -218,7 +216,7 @@ export const getAppointmentsByPatient = async (patientId: number | string, param
       scheduled_time: appt.scheduled_time,
       type: appt.type,
       status: appt.status,
-      color: getAppointmentColor(appt.type),
+      color: getAppointmentColor(appt.category),
       category: (appt.category as 'private' | 'clinic') || 'private'
     }));
   } catch (error) {
