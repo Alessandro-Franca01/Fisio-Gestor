@@ -18,8 +18,6 @@ export interface Appointment {
 
 export const getAppointments = async (startDate: Date, endDate: Date): Promise<Appointment[]> => {
   try {
-    console.group('Fetching Appointments');
-    console.log('Date Range:', { startDate, endDate });
 
     const response = await api.get('/appointments', {
       params: {
@@ -28,7 +26,6 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
       },
     });
 
-    console.log('Raw API Response:', response);
 
     // If response is empty or not in expected format, return empty array
     if (!response.data) {
@@ -55,7 +52,6 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
       appointmentsData = [response.data];
     }
 
-    console.log('Extracted appointments data:', appointmentsData);
 
     // Map to the expected format for the Agenda component
     const mappedAppointments = appointmentsData.map((appt: any) => {
@@ -86,7 +82,6 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
       };
     });
 
-    console.log('Mapped Appointments:', mappedAppointments);
     return mappedAppointments;
 
   } catch (error) {
@@ -97,7 +92,6 @@ export const getAppointments = async (startDate: Date, endDate: Date): Promise<A
     });
     return []; // Return empty array on error to prevent breaking the UI
   } finally {
-    console.groupEnd();
   }
 };
 const getAppointmentColor = (type: string): string => {

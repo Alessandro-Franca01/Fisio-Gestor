@@ -64,9 +64,7 @@ export const getPatientById = async (id: string | number): Promise<Patient> => {
 
 export const createPatient = async (payload: Partial<Patient> & { addresses?: any[] }) => {
   try {
-    console.log('Sending patient creation request with payload:', JSON.stringify(payload, null, 2));
     const response = await api.post('/patients', payload);
-    console.log('Patient created successfully:', response.data);
     return response.data?.data ?? response.data;
   } catch (error: any) {
     console.error('Error creating patient:', {

@@ -1,58 +1,51 @@
 import axios from 'axios';
 
 const api = axios.create({
-  // baseURL: 'https://sistemaspb.shop/api',
-  baseURL: import.meta.env.MODE === 'production' ? 'https://sistemaspb.shop/api' : 'http://localhost:8000/api',
+  baseURL:
+    import.meta.env.VITE_API_URL ??
+    (import.meta.env.MODE === 'production' ? 'https://sistemaspb.shop/api' : 'http://localhost:8000/api'),
   headers: {
     'Content-Type': 'application/json',
-    'Accept': 'application/json',
+    Accept: 'application/json',
   },
 });
 
-// Request interceptor
-api.interceptors.request.use(
-  config => {
-    const token = localStorage.getItem('token');
-    console.group('API Request');
-    console.log('URL:', config.url);
-    console.log('Method:', config.method?.toUpperCase());
-    console.log('Headers:', { ...config.headers, Authorization: token ? 'Bearer [TOKEN]' : 'Not set' });
-    console.log('Params:', config.params);
-    console.groupEnd();
+const TOKEN_KEY = 'token';
+const USER_KEY = 'user';
 
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  error => {
-    console.error('Request Error:', error);
-    return Promise.reject(error);
+const clearSession = () => {
+  try {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+  } catch {
+    // ignore
   }
-);
+};
 
-// Response interceptor
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 api.interceptors.response.use(
-  response => {
-    console.group('API Response');
-    console.log('URL:', response.config.url);
-    console.log('Status:', response.status);
-    console.log('Data:', response.data);
-    console.groupEnd();
-    return response;
-  },
+  response => response,
   error => {
-    if (error.response) {
-      console.error('API Error Response:', {
-        url: error.config?.url,
-        status: error.response.status,
-        data: error.response.data,
-        headers: error.response.headers,
-      });
-    } else if (error.request) {
-      console.error('API Request Error:', error.request);
-    } else {
-      console.error('API Error:', error.message);
+    const status = error.response?.status;
+    const isLoginRequest = error.config?.url?.includes('/login');
+
+    // Token expirado/inválido: limpa a sessão e volta para o login (rota "/" no HashRouter)
+    if (status === 401 && !isLoginRequest) {
+      clearSession();
+      if (window.location.hash !== '#/' && window.location.hash !== '') {
+        window.location.hash = '#/';
+      }
+    }
+
+    if (import.meta.env.DEV) {
+      console.error('API error:', error.config?.method?.toUpperCase(), error.config?.url, status ?? error.message);
     }
     return Promise.reject(error);
   }
