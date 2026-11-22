@@ -11,8 +11,9 @@ const PRINT_CSS = `
 @media print {
   body * { visibility: hidden !important; }
   #report-print, #report-print * { visibility: visible !important; }
-  #report-print { position: absolute; left: 0; top: 0; width: 100%; box-shadow: none !important; border: none !important; }
-  @page { margin: 14mm; }
+  #report-print { position: absolute; left: 0; top: 0; width: 100%; box-sizing: border-box; padding: 14mm !important; box-shadow: none !important; border: none !important; border-radius: 0 !important; }
+  /* margem 0 remove o cabeçalho/rodapé do navegador (URL, data, título); o respiro vem do padding acima */
+  @page { margin: 0; }
 }`;
 
 export const SessionReportPage: React.FC = () => {
