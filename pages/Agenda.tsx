@@ -493,7 +493,7 @@ export const Agenda: React.FC = () => {
                 <span className="text-xs text-subtle-light dark:text-subtle-dark font-bold">Privado</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="size-3 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                <div className="size-3 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.5)]"></div>
                 <span className="text-xs text-subtle-light dark:text-subtle-dark font-bold">Clínica</span>
               </div>
             </div>
