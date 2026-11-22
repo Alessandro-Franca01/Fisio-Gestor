@@ -25,7 +25,34 @@ export interface Session {
     appointments?: any[];
     payments?: any[];
     completed_appointments_count?: number;
+    report_comment?: string | null;
+    report_generated_at?: string | null;
 }
+
+export interface SessionReport {
+    session: Session & { health_plan?: { name: string } | null };
+    comment: string | null;
+    generated_at: string;
+    summary: {
+        total: number;
+        realizado: number;
+        faltou: number;
+        cancelado: number;
+        total_value: number;
+        paid_value: number;
+        pending_value: number;
+    };
+}
+
+export const generateSessionReport = async (id: string | number, comment: string): Promise<SessionReport> => {
+    const response = await api.post(`/sessions/${id}/report`, { comment: comment.trim() || null });
+    return response.data;
+};
+
+export const getSessionReport = async (id: string | number): Promise<SessionReport> => {
+    const response = await api.get(`/sessions/${id}/report`);
+    return response.data;
+};
 
 export const getSessions = async (params?: any): Promise<any> => {
     try {
@@ -93,4 +120,6 @@ export default {
     updateSession,
     deleteSession,
     cancelSession,
+    generateSessionReport,
+    getSessionReport,
 };
