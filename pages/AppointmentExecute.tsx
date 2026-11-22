@@ -19,6 +19,7 @@ export const AppointmentExecute: React.FC = () => {
   const [treatmentObjectives, setTreatmentObjectives] = useState<string>('');
   const [selectedResources, setSelectedResources] = useState<string[]>([]);
   const [isSubmittingExecute, setIsSubmittingExecute] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const availableResources = [
     'Cinesioterapia',
@@ -212,13 +213,23 @@ export const AppointmentExecute: React.FC = () => {
               </div>
             </div>
 
+            {submitError && (
+              <p className="flex items-center gap-2 text-sm font-medium text-red-600 dark:text-red-400">
+                <Icon name="error" className="text-base" /> {submitError}
+              </p>
+            )}
+
             {/* Action Buttons */}
             <div className="flex justify-end items-center gap-4 mt-10 pt-6 border-t border-border-light dark:border-border-dark">
               <button onClick={() => navigate('/dashboard')} className="h-12 px-6 text-text-light dark:text-text-dark rounded-lg text-sm font-medium hover:bg-primary/10 transition-colors">Cancelar</button>
               <button onClick={async () => {
                 if (!id) return;
+                setSubmitError(null);
+                if (!startTime || !endTime) {
+                  setSubmitError('Informe o horário de início e de término do atendimento para concluir.');
+                  return;
+                }
                 setIsSubmittingExecute(true);
-                setError(null);
                 try {
                   await executeAppointment(id, {
                     start_time: startTime,
@@ -230,7 +241,12 @@ export const AppointmentExecute: React.FC = () => {
                   navigate('/agenda');
                 } catch (err) {
                   console.error('Execute failed:', err);
-                  setError('Erro ao concluir atendimento.');
+                  const apiErrors = (err as any)?.response?.data?.errors;
+                  setSubmitError(
+                    apiErrors
+                      ? (Object.values(apiErrors).flat() as string[]).join(' ')
+                      : (err as any)?.response?.data?.message || 'Erro ao concluir atendimento.'
+                  );
                 } finally {
                   setIsSubmittingExecute(false);
                 }
