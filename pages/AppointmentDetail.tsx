@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Icon } from '../components/Icon';
 import { getAppointmentById, updateAppointmentStatus } from '../services/appointmentService';
+import { AppointmentAttachments } from '../components/attachments/AppointmentAttachments';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -205,6 +206,10 @@ export const AppointmentDetail: React.FC = () => {
                                     </div>
                                 </div>
                             )}
+                            <div className="md:col-span-2 mt-2">
+                                <p className="text-sm text-subtle-light dark:text-subtle-dark">Fotos do Atendimento</p>
+                                {id && <AppointmentAttachments appointmentId={id} readOnly />}
+                            </div>
                         </>
                     )}
                 </div>
