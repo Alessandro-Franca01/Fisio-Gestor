@@ -47,6 +47,28 @@ export const SessionReportPage: React.FC = () => {
     const { session, summary, comment, generated_at } = report;
     const appointments = session.appointments ?? [];
 
+    // O navegador usa o título da página como nome sugerido do PDF: relatorio-primeironome-dd-mm-aaaa
+    const handleDownloadPdf = () => {
+        const firstName = (session.patient?.name ?? 'paciente')
+            .trim()
+            .split(/\s+/)[0]
+            .normalize('NFD')
+            .replace(/[̀-ͯ]/g, '')
+            .replace(/[^a-zA-Z0-9]/g, '')
+            .toLowerCase();
+        const lastDate = appointments[appointments.length - 1]?.date?.substring(0, 10) ?? generated_at.substring(0, 10);
+        const [y, m, d] = lastDate.split('-');
+
+        const previousTitle = document.title;
+        document.title = `relatorio-${firstName}-${d}-${m}-${y}`;
+        const restore = () => {
+            document.title = previousTitle;
+            window.removeEventListener('afterprint', restore);
+        };
+        window.addEventListener('afterprint', restore);
+        window.print();
+    };
+
     return (
         <div className="mx-auto max-w-4xl">
             <style>{PRINT_CSS}</style>
@@ -59,7 +81,7 @@ export const SessionReportPage: React.FC = () => {
                     <Icon name="arrow_back" className="text-lg" /> Voltar para a sessão
                 </button>
                 <button
-                    onClick={() => window.print()}
+                    onClick={handleDownloadPdf}
                     className="flex h-10 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-bold text-background-dark shadow-sm hover:opacity-90"
                 >
                     <Icon name="picture_as_pdf" /> Baixar PDF
